@@ -6,7 +6,7 @@ Built with **Google's Agent Development Kit (ADK)** principles, powered by **Gem
 
 ## 🎪 The Pitch (Because Every Hackathon Needs One)
 
-**"Automations"** - they said. *Yawn*. Could the theme be any more... predictable? 😴
+**"Automations"** - they said. *Yawn*. Could the theme be a bit less... boring? 😴
 
 But here's the thing: we're not building toy automations. We come from the enterprise trenches where "automation" means orchestrating 47 microservices, 3 databases, 2 message queues, and that one legacy SOAP API from 2009 that nobody wants to touch but everybody depends on.
 
