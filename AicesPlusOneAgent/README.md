@@ -2,11 +2,13 @@
 
 > An intelligent AI agent that automatically generates and maintains C4 architecture diagrams from your codebase.
 
-Built with **Google's Agent Development Kit (ADK)** principles, powered by **Gemini 2.5**, and exposed as a **Model Context Protocol (MCP)** server.
+Powered by **Gemini 2.5**, and exposed as a **Model Context Protocol (MCP)** server.
+
+(We also built a version with **Google's Agent Development Kit (ADK)**, which is included in this repo, but well ... we are still not so proud of it! So in case we should demo, we will demo the non-adk version)
 
 ## 🎪 The Pitch (Because Every Hackathon Needs One)
 
-**"Automations"** - they said. *Yawn*. Could the theme be any more... predictable? 😴
+**"Automations"** - they said. *Yawn*. Could the theme be a bit less... boring? 😴
 
 But here's the thing: we're not building toy automations. We come from the enterprise trenches where "automation" means orchestrating 47 microservices, 3 databases, 2 message queues, and that one legacy SOAP API from 2009 that nobody wants to touch but everybody depends on.
 
