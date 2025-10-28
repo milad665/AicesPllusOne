@@ -1,314 +1,273 @@
-# Git Repository Manager
+# C4 Architecture Agent with MCP Server
 
-A comprehensive Python application that manages multiple git repositories and provides API endpoints for project metadata extraction using Tree-sitter. This tool is designed to help build C4 architecture metadata by analyzing codebases and extracting structural information.
+> An intelligent AI agent that automatically generates and maintains C4 architecture diagrams from your codebase.
 
-## 🚀 Features
+Built with **Google's Agent Development Kit (ADK)** principles, powered by **Gemini 2.5**, and exposed as a **Model Context Protocol (MCP)** server.
 
-- **Repository Management**: Configure multiple git repositories with SSH keys
-- **Automatic Synchronization**: Periodic cloning/pulling of repositories (configurable interval)
-- **Code Analysis**: Extract project metadata using Tree-sitter parsers
-- **Multi-language Support**: Python, JavaScript, TypeScript, Java, C++, Go, Rust, C#
-- **REST API**: Comprehensive API for project information and entry points
-- **Real-time Updates**: Background synchronization with status tracking
-- **Docker Support**: Container-ready for easy deployment
+## 🎪 The Pitch (Because Every Hackathon Needs One)
 
-## 🛠️ Installation
+**"Automations"** - they said. *Yawn*. Could the theme be any more... predictable? 😴
 
-### Quick Setup
+But here's the thing: we're not building toy automations. We come from the enterprise trenches where "automation" means orchestrating 47 microservices, 3 databases, 2 message queues, and that one legacy SOAP API from 2009 that nobody wants to touch but everybody depends on.
 
-1. **Clone and setup**:
-```bash
-git clone <repository-url>
-cd AicesPlusOne
-python setup.py
-```
+Now, let's get serious for a moment. 🎯
 
-2. **Start the application**:
-```bash
-python dev_server.py
-```
+Modern software doesn't work in isolation anymore. Your beautiful React app talks to a Spring Boot backend, which calls an AWS Lambda, which triggers a Kafka event, which updates a Redis cache, which... you get the point. This isn't just code - it's a **choreographed symphony of services**, and understanding the high-level architecture is absolutely critical.
 
-### Manual Installation
+Here's the problem: **AI coding agents are getting really good at writing code, but they're flying blind without architectural context.** They can help you write a function, sure, but can they tell you if it fits into your overall system design? Can they understand which services this component should communicate with? Do they know if you're about to create circular dependencies that'll haunt you at 3 AM?
 
-1. **Install dependencies**:
-```bash
-pip install -r requirements.txt
-```
+**That's where we come in.** 
 
-2. **Setup environment**:
-```bash
-cp .env.example .env
-# Edit .env file with your configuration
-```
+This tool automatically generates C4 architecture diagrams from your actual codebase - not some outdated documentation from 2021 that nobody maintains. It gives AI coding agents (and humans, we still matter!) the high-level architectural context they need to write **production-ready code** that actually fits into your system.
 
-3. **Create directories**:
-```bash
-mkdir -p repositories data .ssh_keys logs
-```
+Because let's face it: the difference between a code snippet and production code is understanding where it lives in the grand scheme of things. 
 
-4. **Run the application**:
-```bash
-python -m aices_plus_one.main
-```
+TL;DR: We make your AI coding assistant architecturally aware. You're welcome. 🎤⬇️
 
-### Docker Installation
+## 🎯 What It Does
 
-```bash
-docker-compose up -d
-```
+This agent analyzes your code repositories and automatically generates comprehensive C4 architecture diagrams at three levels:
 
-## 📚 API Documentation
+1. **Context View** - Shows your system in its environment with users and external systems
+2. **Container View** - Details the applications, services, and data stores
+3. **Component View** - Breaks down the internal structure of containers
 
-Once running, visit `http://localhost:8000/docs` for interactive API documentation.
+All diagrams are generated in structured JSON format with PlantUML scripts for visualization.
 
-### Core Endpoints
+## ✨ Key Features
 
-#### Repository Management
-- `POST /repositories` - Add a new repository configuration
-- `GET /repositories` - List all configured repositories  
-- `DELETE /repositories/{repo_id}` - Remove a repository configuration
-- `GET /repositories/{repo_id}/sync-status` - Get sync status
-- `POST /repositories/sync` - Manually trigger synchronization
+- **🤖 AI-Powered Generation**: Uses Gemini 2.5 to intelligently analyze code and create architecture diagrams
+- **🔗 Code Analysis Integration**: Automatically fetches project metadata from a code analysis service
+- **🔌 MCP Server**: Exposes functionality via Model Context Protocol for universal compatibility
+- **💾 Persistent Memory**: Uses ADK-style memory to maintain architecture across sessions
+- **📊 Structured Output**: Generates diagrams in standardized JSON format with full schema validation
+- **🔄 Live Updates**: Update architecture by providing PlantUML scripts
 
-#### Project Analysis
-- `GET /projects` - List all projects with metadata
-- `GET /projects/{project_id}` - Get specific project metadata
-- `GET /projects/{project_id}/entrypoints` - Get entry points for a project
+## 🛠️ MCP Tools
 
-#### System
-- `GET /health` - Health check endpoint
-- `GET /` - API information
+### 1. `get_c4_architecture`
+Get the latest C4 architecture diagram in JSON format.
 
-## 🔧 Configuration
-
-### Environment Variables
-
-```bash
-# Database settings
-DATABASE_PATH=repositories.db
-
-# Repository settings  
-REPOSITORIES_DIR=repositories
-
-# Synchronization (in minutes)
-SYNC_INTERVAL_MINUTES=5
-
-# API settings
-API_HOST=0.0.0.0
-API_PORT=8000
-
-# Security
-SSH_KEYS_DIR=/tmp/git_ssh_keys
-
-# Analysis
-CACHE_REFRESH_HOURS=1
-MAX_DEPENDENCIES=50
-
-# Logging
-LOG_LEVEL=INFO
-```
-
-### Repository Configuration Format
-
+**Input:**
 ```json
 {
-    "name": "my-project",
-    "url": "git@github.com:user/repo.git", 
-    "ssh_private_key": "-----BEGIN OPENSSH PRIVATE KEY-----\n...",
-    "ssh_public_key": "ssh-ed25519 AAAAC3...",
-    "default_branch": "main"
+  "force_refresh": false  // Optional: force regeneration
 }
 ```
 
-## 💻 Usage Examples
+**Output:** Complete C4 architecture with Context, Container, and Component views.
 
-### Using the Example Client
+### 2. `update_c4_architecture`
+Update C4 architecture from PlantUML markup.
 
-```bash
-# Add a repository
-python example_client.py add my-repo git@github.com:user/repo.git ~/.ssh/id_rsa ~/.ssh/id_rsa.pub
-
-# List repositories
-python example_client.py list-repos
-
-# List analyzed projects
-python example_client.py list-projects
-
-# Get entry points for a project
-python example_client.py entrypoints my-repo_project-name
-
-# Trigger manual sync
-python example_client.py sync
-
-# Check health
-python example_client.py health
+**Input:**
+```json
+{
+  "plantuml_script": "@startuml...",  // PlantUML C4 script
+  "view_type": "context"  // "context", "container", "component", or "all"
+}
 ```
 
-### Using curl
+**Output:** Updated C4 architecture in JSON format.
+
+## 🚀 Quick Start
+
+### 1. Prerequisites
+
+- Python 3.10 or higher
+- Google API key for Gemini ([Get one here](https://makersuite.google.com/app/apikey))
+
+### 2. Installation
 
 ```bash
-# Add repository
-curl -X POST "http://localhost:8000/repositories" \
-     -H "Content-Type: application/json" \
-     -d '{
-       "name": "my-repo",
-       "url": "git@github.com:user/repo.git",
-       "ssh_private_key": "...",
-       "ssh_public_key": "...",
-       "default_branch": "main"
-     }'
+# Clone or navigate to the project
+cd /Users/milad/Developer/AicesPlusOneAgent
 
-# Get projects
-curl "http://localhost:8000/projects"
+# Install dependencies
+pip install -r requirements.txt
 
-# Get entry points
-curl "http://localhost:8000/projects/my-repo_project/entrypoints"
+# Run the quickstart script
+python quickstart.py
+```
+
+### 3. Configuration
+
+Create a `.env` file (or copy from `.env.example`):
+
+```bash
+GOOGLE_API_KEY=your-gemini-api-key-here
+CODE_ANALYSIS_API_URL=https://aices-plus-one-analyzer-691085128403.europe-west1.run.app
+MEMORY_STORE_PATH=./data/memory.json
+```
+
+### 4. Test It
+
+```bash
+# Test with CLI
+python cli.py
+
+# Run examples
+python examples.py
+
+# Start MCP server
+python src/server.py
+```
+
+## 📖 Usage Modes
+
+### Mode 1: CLI (Quick Testing)
+
+```bash
+python cli.py
+```
+
+Generates a C4 architecture and saves it to `data/c4_architecture.json`.
+
+### Mode 2: MCP Server (Production)
+
+```bash
+python src/server.py
+```
+
+Runs as an MCP server for integration with AI assistants like Claude Desktop.
+
+### Mode 3: Direct Import (Programmatic)
+
+```python
+from src.agent import C4ArchitectureAgent
+
+agent = C4ArchitectureAgent()
+architecture = await agent.generate_c4_architecture()
 ```
 
 ## 🏗️ Architecture
 
+```
+┌─────────────────────────────────────────────┐
+│         MCP Server (src/server.py)          │
+│  Exposes tools via Model Context Protocol   │
+└─────────────────┬───────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────┐
+│      C4 Agent (src/agent.py)                │
+│  • Orchestrates architecture generation     │
+│  • Uses Gemini 2.5 for AI analysis          │
+│  • Manages memory and state                 │
+└──────┬──────────────────────┬───────────────┘
+       │                      │
+       ▼                      ▼
+┌─────────────────┐   ┌──────────────────────┐
+│  Code Analyzer  │   │   Memory Store       │
+│  (API Client)   │   │   (Persistence)      │
+│  • Fetches      │   │  • Saves/loads       │
+│    projects     │   │    architecture      │
+│  • Gets entry   │   │  • JSON storage      │
+│    points       │   │  • Metadata          │
+└─────────────────┘   └──────────────────────┘
+```
+
 ### Components
 
-1. **API Layer** (`api.py`): FastAPI-based REST API
-2. **Database Layer** (`database.py`): SQLite with async support
-3. **Git Manager** (`git_manager.py`): Repository cloning and synchronization
-4. **Tree-sitter Analyzer** (`tree_sitter_analyzer.py`): Code analysis and metadata extraction
-5. **Scheduler**: Background task for periodic synchronization
+- **`src/server.py`** - MCP server implementation
+- **`src/agent.py`** - Core agent with AI-powered C4 generation
+- **`src/schemas.py`** - Pydantic models for C4 architecture
+- **`src/code_analyzer.py`** - HTTP client for code analysis service
+- **`src/memory_store.py`** - Persistent storage using ADK memory pattern
+- **`cli.py`** - Command-line interface for testing
+- **`examples.py`** - Usage examples and documentation
 
-### Data Flow
+## 🔌 MCP Integration
 
-1. Configure repositories via API
-2. Background scheduler clones/pulls repositories
-3. Tree-sitter analyzes code and extracts metadata
-4. API serves project information and entry points
-5. External services consume data for C4 architecture building
+### For Claude Desktop
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "c4-architecture": {
+      "command": "python3",
+      "args": ["/Users/milad/Developer/AicesPlusOneAgent/src/server.py"],
+      "env": {
+        "GOOGLE_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+See **[MCP_CONFIGURATION.md](MCP_CONFIGURATION.md)** for more details.
+
+## 📚 Documentation
+
+- **[README.md](README.md)** (this file) - Quick overview and getting started
+- **[SETUP.md](SETUP.md)** - Detailed setup and configuration guide
+- **[ADK_DOCUMENTATION.md](ADK_DOCUMENTATION.md)** - Google ADK concepts and implementation
+- **[MCP_CONFIGURATION.md](MCP_CONFIGURATION.md)** - MCP server configuration examples
 
 ## 🧪 Testing
 
 Run the test suite:
 
 ```bash
+pip install pytest pytest-asyncio
 python -m pytest tests/ -v
 ```
 
-Test coverage:
+Run the quickstart check:
+
 ```bash
-pip install pytest-cov
-python -m pytest tests/ --cov=aices_plus_one --cov-report=html
+python quickstart.py
 ```
 
-## 📋 Supported Languages & Features
+## 📊 C4 Architecture Schema
 
-| Language   | Entry Points | Dependencies | Project Type Detection |
-|------------|--------------|--------------|----------------------|
-| Python     | ✅ Functions, Classes | ✅ requirements.txt, setup.py | ✅ |
-| JavaScript | ✅ Functions, Classes | ✅ package.json | ✅ |
-| TypeScript | ✅ Functions, Classes | ✅ package.json | ✅ |
-| Java       | ✅ Methods, Classes | ✅ pom.xml | ✅ |
-| C++        | ⏳ Coming Soon | ⏳ | ✅ |
-| Go         | ⏳ Coming Soon | ⏳ | ✅ |
-| Rust       | ⏳ Coming Soon | ✅ Cargo.toml | ✅ |
-| C#         | ⏳ Coming Soon | ⏳ | ✅ |
+The agent generates architecture following this structure:
 
-### Project Types Detected
-
-- Web Applications
-- APIs (FastAPI, Flask, Django, Express, etc.)
-- CLI Tools
-- Libraries
-- Microservices
-- Mobile Apps
-- Desktop Applications
-
-## 🔒 Security Considerations
-
-- SSH keys are stored securely in the database
-- Temporary SSH key files are cleaned up after use
-- API doesn't expose private keys in responses
-- File system permissions are properly set
-- Docker containers run with appropriate security context
-
-## 🚀 Production Deployment
-
-### Docker Compose (Recommended)
-
-```yaml
-version: '3.8'
-services:
-  git-repo-manager:
-    build: .
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./data:/app/data
-      - ./repositories:/app/repositories
-    environment:
-      - DATABASE_PATH=/app/data/repositories.db
-      - SYNC_INTERVAL_MINUTES=5
-    restart: unless-stopped
+```json
+{
+  "ContextView": {
+    "Actors": [...],
+    "SoftwareSystems": [...],
+    "Relationships": [...],
+    "C4PlantUmlScript": "..."
+  },
+  "ContainerView": {
+    "Actors": [...],
+    "Containers": [...],
+    "Relationships": [...],
+    "C4PlantUmlScript": "..."
+  },
+  "ComponentView": {
+    "Actors": [...],
+    "Components": [...],
+    "Relationships": [...],
+    "C4PlantUmlScript": "..."
+  },
+  "ArchitectureExplanation": "Overall architecture description"
+}
 ```
 
-### Systemd Service
-
-```ini
-[Unit]
-Description=Git Repository Manager
-After=network.target
-
-[Service]
-Type=simple
-User=git-manager
-WorkingDirectory=/opt/git-repo-manager
-ExecStart=/opt/git-repo-manager/.venv/bin/python -m aices_plus_one.main
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-```
+See **[src/schemas.py](src/schemas.py)** for the complete Pydantic schema.
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Run the test suite
-6. Submit a pull request
+Contributions are welcome! Areas for improvement:
+
+- Additional code analysis service integrations
+- Enhanced PlantUML parsing
+- More sophisticated AI prompting strategies
+- Diagram visualization tools
+- Unit test coverage
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License - See LICENSE file for details
 
-## 🆘 Troubleshooting
+## 🙏 Acknowledgments
 
-### Common Issues
-
-**SSH Key Issues**
-- Ensure SSH keys have proper permissions (600 for private key)
-- Verify SSH key format (OpenSSH format required)
-- Check if the key is added to your git provider
-
-**Tree-sitter Parsing Errors**
-- Some files may be skipped if they contain syntax errors
-- Check logs for specific parsing issues
-- Ensure language parsers are properly installed
-
-**Synchronization Issues**
-- Check repository URLs and SSH key access
-- Verify network connectivity
-- Review sync status via API endpoint
-
-### Logs
-
-Application logs are available at:
-- Console output (development)
-- Container logs (Docker)
-- `/app/logs/` directory (if configured)
-
-### Health Check
-
-Use the health endpoint to monitor application status:
-```bash
-curl http://localhost:8000/health
-```
+- Built with [Google's Generative AI](https://ai.google.dev/)
+- Uses [Model Context Protocol](https://modelcontextprotocol.io/)
+- Implements [C4 Model](https://c4model.com/) architecture patterns
+- Inspired by Google's Agent Development Kit (ADK) principles
