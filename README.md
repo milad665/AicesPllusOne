@@ -1,33 +1,17 @@
-# C4 Architecture Agent with MCP Server
+# Aices Plus One: Complete C4 Architecture Intelligence System
 
-> An intelligent AI agent that automatically generates and maintains C4 architecture diagrams from your codebase.
+> An intelligent AI-powered system that automatically generates and maintains C4 architecture diagrams from your codebase, combining a comprehensive code analysis service with an AI agent.
 
-Powered by **Gemini 2.5**, and exposed as a **Model Context Protocol (MCP)** server.
+## 🏗️ System Overview
 
-(We also built a version with **Google's Agent Development Kit (ADK)**, which is included in this repo, but well ... we are still not so proud of it! So in case we should demo, we will demo the non-adk version)
+This project consists of two main components working together to provide complete architectural intelligence:
 
-## 🎪 The Pitch (Because Every Hackathon Needs One)
-
-**"Automations"** - they said. *Yawn*. Could the theme be a bit less... boring? 😴
-
-But here's the thing: we're not building toy automations. We come from the enterprise trenches where "automation" means orchestrating 47 microservices, 3 databases, 2 message queues, and that one legacy SOAP API from 2009 that nobody wants to touch but everybody depends on.
-
-Now, let's get serious for a moment. 🎯
-
-Modern software doesn't work in isolation anymore. Your beautiful React app talks to a Spring Boot backend, which calls an AWS Lambda, which triggers a Kafka event, which updates a Redis cache, which... you get the point. This isn't just code - it's a **choreographed symphony of services**, and understanding the high-level architecture is absolutely critical.
-
-Here's the problem: **AI coding agents are getting really good at writing code, but they're flying blind without architectural context.** They can help you write a function, sure, but can they tell you if it fits into your overall system design? Can they understand which services this component should communicate with? Do they know if you're about to create circular dependencies that'll haunt you at 3 AM?
-
-**That's where we come in.** 
-
-This tool automatically generates C4 architecture diagrams from your actual codebase - not some outdated documentation from 2021 that nobody maintains. It gives AI coding agents (and humans, we still matter!) the high-level architectural context they need to write **production-ready code** that actually fits into your system.
-
-Because let's face it: the difference between a code snippet and production code is understanding where it lives in the grand scheme of things. 
-
-TL;DR: We make your AI coding assistant architecturally aware. You're welcome. 🎤⬇️
+1. **🔍 Code Analyzer Service** (`AicesPlusOne/`) - A comprehensive Git repository manager that extracts project metadata using Tree-sitter
+2. **🤖 C4 Architecture Agent** (`AicesPlusOneAgent/`) - An AI agent powered by **Gemini 2.5** that generates C4 architecture diagrams and exposes functionality via **Model Context Protocol (MCP)**
 
 ## 🎯 What It Does
 
+### C4 Architecture Agent
 This agent analyzes your code repositories and automatically generates comprehensive C4 architecture diagrams at three levels:
 
 1. **Context View** - Shows your system in its environment with users and external systems
@@ -36,152 +20,76 @@ This agent analyzes your code repositories and automatically generates comprehen
 
 All diagrams are generated in structured JSON format with PlantUML scripts for visualization.
 
-## ✨ Key Features
+### Code Analyzer Service
+The underlying code analysis service provides:
 
-- **🤖 AI-Powered Generation**: Uses Gemini 2.5 to intelligently analyze code and create architecture diagrams
-- **🔗 Code Analysis Integration**: Automatically fetches project metadata from a code analysis service
-- **🔌 MCP Server**: Exposes functionality via Model Context Protocol for universal compatibility
-- **💾 Persistent Memory**: Uses ADK-style memory to maintain architecture across sessions
-- **📊 Structured Output**: Generates diagrams in standardized JSON format with full schema validation
-- **🔄 Live Updates**: Update architecture by providing PlantUML scripts
+- **Multi-Repository Management**: Configure multiple git repositories with SSH keys
+- **Language-Agnostic Analysis**: Tree-sitter powered parsing for 8+ programming languages
+- **Automatic Synchronization**: Periodic cloning/pulling of repositories (configurable interval)
+- **Project Intelligence**: Automatic project type detection and technology stack identification
+- **REST API**: Comprehensive API for project information and entry points
+- **Real-time Updates**: Background synchronization with status tracking
+- **Docker Support**: Container-ready for easy deployment
+
+## � Quick Start
+
+### 1. Start the Code Analyzer Service
+
+```bash
+# Navigate to the analyzer service
+cd AicesPlusOne
+
+# Quick setup and start
+python setup.py
+python dev_server.py
+```
+
+The service will be available at `http://localhost:8000` with API docs at `/docs`.
+
+### 2. Start the C4 Architecture Agent
+
+```bash
+# Navigate to the agent
+cd AicesPlusOneAgent
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure (create .env file)
+echo "GOOGLE_API_KEY=your-gemini-api-key" > .env
+echo "CODE_ANALYSIS_API_URL=http://localhost:8000" >> .env
+
+# Test the agent
+python cli.py
+
+# Start MCP server
+python src/server.py
+```
+
+## � Supported Languages & Capabilities
+
+| Language   | Entry Points | Dependencies | Project Type Detection | Frameworks Detected |
+|------------|--------------|--------------|----------------------|-------------------|
+| Python     | ✅ Functions, Classes | ✅ requirements.txt, setup.py | ✅ | FastAPI, Flask, Django |
+| JavaScript | ✅ Functions, Classes | ✅ package.json | ✅ | Express, React, Vue |
+| TypeScript | ✅ Functions, Classes | ✅ package.json | ✅ | Angular, Next.js |
+| Java       | ✅ Methods, Classes | ✅ pom.xml, build.gradle | ✅ | Spring Boot, Maven |
+| C++        | ⏳ Coming Soon | ⏳ CMakeLists.txt | ✅ | |
+| Go         | ⏳ Coming Soon | ✅ go.mod | ✅ | Gin, Echo |
+| Rust       | ⏳ Coming Soon | ✅ Cargo.toml | ✅ | Actix, Rocket |
+| C#         | ⏳ Coming Soon | ✅ .csproj | ✅ | ASP.NET Core |
 
 ## 🛠️ MCP Tools
 
 ### 1. `get_c4_architecture`
 Get the latest C4 architecture diagram in JSON format.
 
-**Input:**
-```json
-{
-  "force_refresh": false  // Optional: force regeneration
-}
-```
-
-**Output:** Complete C4 architecture with Context, Container, and Component views.
-
 ### 2. `update_c4_architecture`
 Update C4 architecture from PlantUML markup.
 
-**Input:**
-```json
-{
-  "plantuml_script": "@startuml...",  // PlantUML C4 script
-  "view_type": "context"  // "context", "container", "component", or "all"
-}
-```
+## 🔌 Integration Examples
 
-**Output:** Updated C4 architecture in JSON format.
-
-## 🚀 Quick Start
-
-### 1. Prerequisites
-
-- Python 3.10 or higher
-- Google API key for Gemini ([Get one here](https://makersuite.google.com/app/apikey))
-
-### 2. Installation
-
-```bash
-# Clone or navigate to the project
-cd /Users/milad/Developer/AicesPlusOneAgent
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the quickstart script
-python quickstart.py
-```
-
-### 3. Configuration
-
-Create a `.env` file (or copy from `.env.example`):
-
-```bash
-GOOGLE_API_KEY=your-gemini-api-key-here
-CODE_ANALYSIS_API_URL=https://aices-plus-one-analyzer-691085128403.europe-west1.run.app
-MEMORY_STORE_PATH=./data/memory.json
-```
-
-### 4. Test It
-
-```bash
-# Test with CLI
-python cli.py
-
-# Run examples
-python examples.py
-
-# Start MCP server
-python src/server.py
-```
-
-## 📖 Usage Modes
-
-### Mode 1: CLI (Quick Testing)
-
-```bash
-python cli.py
-```
-
-Generates a C4 architecture and saves it to `data/c4_architecture.json`.
-
-### Mode 2: MCP Server (Production)
-
-```bash
-python src/server.py
-```
-
-Runs as an MCP server for integration with AI assistants like Claude Desktop.
-
-### Mode 3: Direct Import (Programmatic)
-
-```python
-from src.agent import C4ArchitectureAgent
-
-agent = C4ArchitectureAgent()
-architecture = await agent.generate_c4_architecture()
-```
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────┐
-│         MCP Server (src/server.py)          │
-│  Exposes tools via Model Context Protocol   │
-└─────────────────┬───────────────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────────────┐
-│      C4 Agent (src/agent.py)                │
-│  • Orchestrates architecture generation     │
-│  • Uses Gemini 2.5 for AI analysis          │
-│  • Manages memory and state                 │
-└──────┬──────────────────────┬───────────────┘
-       │                      │
-       ▼                      ▼
-┌─────────────────┐   ┌──────────────────────┐
-│  Code Analyzer  │   │   Memory Store       │
-│  (API Client)   │   │   (Persistence)      │
-│  • Fetches      │   │  • Saves/loads       │
-│    projects     │   │    architecture      │
-│  • Gets entry   │   │  • JSON storage      │
-│    points       │   │  • Metadata          │
-└─────────────────┘   └──────────────────────┘
-```
-
-### Components
-
-- **`src/server.py`** - MCP server implementation
-- **`src/agent.py`** - Core agent with AI-powered C4 generation
-- **`src/schemas.py`** - Pydantic models for C4 architecture
-- **`src/code_analyzer.py`** - HTTP client for code analysis service
-- **`src/memory_store.py`** - Persistent storage using ADK memory pattern
-- **`cli.py`** - Command-line interface for testing
-- **`examples.py`** - Usage examples and documentation
-
-## 🔌 MCP Integration
-
-### For Claude Desktop
+### Claude Desktop Integration
 
 Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
@@ -190,7 +98,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
   "mcpServers": {
     "c4-architecture": {
       "command": "python3",
-      "args": ["/Users/milad/Developer/AicesPlusOneAgent/src/server.py"],
+      "args": ["/path/to/AicesPlusOneAgent/src/server.py"],
       "env": {
         "GOOGLE_API_KEY": "your-api-key-here"
       }
@@ -199,111 +107,90 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 }
 ```
 
-See **[MCP_CONFIGURATION.md](MCP_CONFIGURATION.md)** for more details.
-
-## 📚 Documentation
-
-- **[README.md](README.md)** (this file) - Quick overview and getting started
-- **[SETUP.md](SETUP.md)** - Detailed setup and configuration guide
-- **[ADK_DOCUMENTATION.md](ADK_DOCUMENTATION.md)** - Google ADK concepts and implementation
-- **[MCP_CONFIGURATION.md](MCP_CONFIGURATION.md)** - MCP server configuration examples
-
-## 🧪 Testing
-
-Run the test suite:
+### Using the Code Analyzer API
 
 ```bash
-pip install pytest pytest-asyncio
-python -m pytest tests/ -v
+# Add a repository
+curl -X POST "http://localhost:8000/repositories" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "name": "my-repo",
+       "url": "git@github.com:user/repo.git",
+       "ssh_private_key": "...",
+       "ssh_public_key": "...",
+       "default_branch": "main"
+     }'
+
+# Get projects and their architecture
+curl "http://localhost:8000/projects"
 ```
 
-Run the quickstart check:
+## 🎪 The Vision
 
-```bash
-python quickstart.py
-```
+Modern software doesn't work in isolation anymore. Your React app talks to a Spring Boot backend, which calls an AWS Lambda, which triggers a Kafka event, which updates a Redis cache, and so on. This isn't just code - it's a **choreographed symphony of services**.
 
-## 📊 C4 Architecture Schema
+**AI coding agents are getting really good at writing code, but they're flying blind without architectural context.** They can help you write a function, but can they tell you if it fits into your overall system design?
 
-The agent generates architecture following this structure:
+**That's where we come in.** This tool automatically generates C4 architecture diagrams from your actual codebase - not outdated documentation. It gives AI coding agents (and humans!) the high-level architectural context they need to write **production-ready code** that actually fits into your system.
 
-```json
-{
-  "ContextView": {
-    "Actors": [...],
-    "SoftwareSystems": [...],
-    "Relationships": [...],
-    "C4PlantUmlScript": "..."
-  },
-  "ContainerView": {
-    "Actors": [...],
-    "Containers": [...],
-    "Relationships": [...],
-    "C4PlantUmlScript": "..."
-  },
-  "ComponentView": {
-    "Actors": [...],
-    "Components": [...],
-    "Relationships": [...],
-    "C4PlantUmlScript": "..."
-  },
-  "ArchitectureExplanation": "Overall architecture description"
-}
-```
-
-See **[src/schemas.py](src/schemas.py)** for the complete Pydantic schema.
-
-## 🚀 Future Direction
-
-The C4 Architecture Agent is just the beginning. Here's what's on the roadmap:
+## 🚀 Future Roadmap
 
 ### 🎨 **IDE Extensions for Interactive C4 Manipulation**
-Build IDE extensions (VS Code, IntelliJ, etc.) that allow users to:
-- Visually manipulate C4 diagrams directly in their development environment
-- Drag-and-drop components to restructure architecture
+- Visually manipulate C4 diagrams directly in development environment
 - Real-time sync between diagram changes and code structure
-- Interactive architecture exploration with zoom levels (Context → Container → Component → Code)
+- Interactive architecture exploration with zoom levels
 
 ### 📚 **Extensive Project Documentation Store**
-Expand beyond architecture diagrams to maintain comprehensive project knowledge:
 - Store detailed project descriptions, business context, and domain models
-- Maintain technology stack documentation and decision rationale
 - Track architectural evolution over time with version history
 - Cross-reference between code changes and architectural impacts
 
 ### 🤖 **MCP Tool for Agent Memory Integration**
-Expose specialized MCP tools that enable coding agents to automatically update the "Plus One" Agent's long-term memory:
 - Auto-capture important project details during development sessions
-- Learn from code review comments and architectural decisions
 - Build institutional knowledge that persists across development teams
 - Enable AI agents to make architecturally-aware code suggestions
 
 ### 🐛 **Bug History and Solution Database**
-Create a comprehensive bug tracking and solution store:
 - Maintain a searchable database of past bugs and their solutions
-- Link bugs to specific architectural components and code patterns
 - AI-powered bug pattern recognition and prevention suggestions
-- Generate "lessons learned" documentation from bug resolution patterns
 
-These enhancements will transform the agent from a diagram generator into a comprehensive architectural intelligence system that learns and evolves with your codebase.
+## 📚 Documentation
+
+- **[Code Analyzer Service README](AicesPlusOne/README.md)** - Detailed service documentation
+- **[C4 Agent README](AicesPlusOneAgent/README.md)** - Agent setup and MCP configuration
+- **[Setup Guide](AicesPlusOneAgent/SETUP.md)** - Detailed setup and configuration
+- **[MCP Configuration](AicesPlusOneAgent/MCP_CONFIGURATION.md)** - MCP server examples
+
+## 🧪 Testing
+
+```bash
+# Test the code analyzer service
+cd AicesPlusOne
+python -m pytest tests/ -v
+
+# Test the C4 agent
+cd AicesPlusOneAgent
+python -m pytest tests/ -v
+python quickstart.py
+```
 
 ## 🤝 Contributing
 
-Contributions are welcome! Areas for improvement:
+We welcome contributions! Areas for improvement:
 
-- Additional code analysis service integrations
-- Enhanced PlantUML parsing
+- Additional language support for Tree-sitter analysis
+- Enhanced PlantUML parsing and generation
 - More sophisticated AI prompting strategies
 - Diagram visualization tools
-- Unit test coverage
+- Integration with more development tools
 
 ## 📄 License
 
-MIT License - See LICENSE file for details
+MIT License - See LICENSE file for details.
 
 ## 🙏 Acknowledgments
 
 - Built with [Google's Generative AI](https://ai.google.dev/)
 - Uses [Model Context Protocol](https://modelcontextprotocol.io/)
 - Implements [C4 Model](https://c4model.com/) architecture patterns
-- Inspired by Google's Agent Development Kit (ADK) principles
+- Powered by [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) for code analysis

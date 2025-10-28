@@ -179,7 +179,108 @@ architecture = await agent.generate_c4_architecture()
 - **`cli.py`** - Command-line interface for testing
 - **`examples.py`** - Usage examples and documentation
 
-## 🔌 MCP Integration
+## � Code Analyzer Service
+
+The C4 Architecture Agent relies on a sophisticated **Git Repository Manager and Code Analysis Service** (located in the `AicesPlusOne/` directory) that serves as the foundation for intelligent architecture generation. This service provides comprehensive multi-repository analysis and metadata extraction capabilities.
+
+### 🚀 Key Capabilities
+
+**Multi-Repository Management**
+- Configure and manage multiple git repositories simultaneously
+- Support for SSH key-based authentication for private repositories
+- Automatic periodic synchronization (configurable intervals)
+- Real-time sync status tracking and health monitoring
+
+**Language-Agnostic Code Analysis**
+- **Tree-sitter powered parsing** for accurate syntax analysis
+- **Multi-language support**: Python, JavaScript, TypeScript, Java, C++, Go, Rust, C#
+- **Extensible parser system** - easily add support for new languages
+- **Entry point detection** - automatically identify main functions, classes, and API endpoints
+- **Dependency analysis** - extract project dependencies from manifest files
+
+**Project Intelligence**
+- **Automatic project type detection** (Web Apps, APIs, CLI tools, Libraries, Microservices, etc.)
+- **Technology stack identification** (frameworks, libraries, build tools)
+- **Architectural pattern recognition** (MVC, microservices, monolith, etc.)
+- **Code structure analysis** - understand project organization and module relationships
+
+### 🛠️ Supported Language Features
+
+| Language   | Entry Points | Dependencies | Project Type Detection | Frameworks Detected |
+|------------|--------------|--------------|----------------------|-------------------|
+| Python     | ✅ Functions, Classes | ✅ requirements.txt, setup.py | ✅ | FastAPI, Flask, Django |
+| JavaScript | ✅ Functions, Classes | ✅ package.json | ✅ | Express, React, Vue |
+| TypeScript | ✅ Functions, Classes | ✅ package.json | ✅ | Angular, Next.js |
+| Java       | ✅ Methods, Classes | ✅ pom.xml, build.gradle | ✅ | Spring Boot, Maven |
+| C++        | ⏳ Coming Soon | ⏳ CMakeLists.txt | ✅ | |
+| Go         | ⏳ Coming Soon | ✅ go.mod | ✅ | Gin, Echo |
+| Rust       | ⏳ Coming Soon | ✅ Cargo.toml | ✅ | Actix, Rocket |
+| C#         | ⏳ Coming Soon | ✅ .csproj | ✅ | ASP.NET Core |
+
+### 📊 REST API Endpoints
+
+The code analyzer service provides a comprehensive REST API:
+
+```bash
+# Repository Management
+POST   /repositories              # Add repository configuration
+GET    /repositories              # List all repositories
+DELETE /repositories/{repo_id}    # Remove repository
+GET    /repositories/{repo_id}/sync-status  # Get sync status
+POST   /repositories/sync         # Trigger manual sync
+
+# Project Analysis  
+GET    /projects                  # List all analyzed projects
+GET    /projects/{project_id}     # Get project metadata
+GET    /projects/{project_id}/entrypoints  # Get entry points
+
+# System Health
+GET    /health                    # Service health check
+GET    /                          # API information
+```
+
+### 🔧 Repository Configuration
+
+Repositories are configured with comprehensive metadata:
+
+```json
+{
+    "name": "my-microservice",
+    "url": "git@github.com:company/service.git",
+    "ssh_private_key": "-----BEGIN OPENSSH PRIVATE KEY-----\n...",
+    "ssh_public_key": "ssh-ed25519 AAAAC3...",
+    "default_branch": "main"
+}
+```
+
+### 🎯 Integration with C4 Agent
+
+The C4 Architecture Agent leverages this rich metadata to:
+
+1. **Understand System Boundaries** - Identify distinct services and applications
+2. **Map Dependencies** - Trace relationships between components
+3. **Detect Patterns** - Recognize architectural patterns (API Gateway, Event-Driven, etc.)
+4. **Generate Accurate Diagrams** - Create C4 views based on actual code structure
+5. **Maintain Consistency** - Keep architecture diagrams synchronized with code changes
+
+### 🐳 Deployment Options
+
+**Docker Deployment** (Recommended)
+```bash
+cd AicesPlusOne
+docker-compose up -d
+```
+
+**Manual Setup**
+```bash
+cd AicesPlusOne
+python setup.py              # Quick setup
+python dev_server.py         # Start service
+```
+
+The service runs on `http://localhost:8000` with interactive API documentation at `/docs`.
+
+## �🔌 MCP Integration
 
 ### For Claude Desktop
 
