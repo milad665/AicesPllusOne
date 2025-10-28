@@ -4,7 +4,7 @@
 
 Powered by **Gemini 2.5**, and exposed as a **Model Context Protocol (MCP)** server.
 
-(We also built a version with **Google's Agent Development Kit (ADK)**, which is included in this repo, but well ... it's still not what we wanted! So in case we should demo, we will demo the non-adk version)
+(We also built a version with **Google's Agent Development Kit (ADK)**, which is included in this repo, but well ... we are still not so proud of it! So in case we should demo, we will demo the non-adk version)
 
 ## 🎪 The Pitch (Because Every Hackathon Needs One)
 
