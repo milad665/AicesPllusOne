@@ -1,0 +1,9 @@
+@startuml context_view
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+Person(user, "User", "EndUser")
+System(plant, "Plant", "A tool to scan project files and generate JSON output, filtering based on gitignore and custom rules.")
+
+Rel(user, plant, "Uses")
+
+@enduml

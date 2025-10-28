@@ -1,0 +1,35 @@
+@startuml complete_c4_architecture
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Plant System - Complete C4 Architecture
+
+' Context View
+Person(user, "User", "EndUser")
+System_Boundary(plant_boundary, "Plant System") {
+    
+    ' Container View
+    Container(console_app, "Console Application", ".NET Console", "The console application that drives the file scanning and JSON generation process.")
+    
+    ' Component View
+    Component(app_engine, "AppEngine", "C# Class", "Orchestrates the application workflow")
+    Component(file_scan_service, "FileScanService", "C# Class", "Scans directories and retrieves file paths")
+    Component(custom_filter_service, "CustomFilterService", "C# Class", "Applies custom include/exclude filters")
+    Component(git_ignore_service, "GitIgnoreService", "C# Class", "Loads and applies .gitignore rules")
+    Component(file_format_service, "FileFormatService", "C# Class", "Formats content into JSON")
+    Component(helper, "Helper", "C# Class", "Provides utility functions")
+}
+
+' Relationships
+Rel(user, console_app, "Uses")
+Rel(console_app, app_engine, "Contains")
+
+Rel(app_engine, file_scan_service, "Uses")
+Rel(app_engine, custom_filter_service, "Uses")
+Rel(app_engine, git_ignore_service, "Uses")
+Rel(app_engine, file_format_service, "Uses")
+Rel(app_engine, helper, "Uses")
+Rel(custom_filter_service, git_ignore_service, "Uses")
+
+@enduml

@@ -1,0 +1,20 @@
+@startuml component_view
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+Container(console_app, "Console Application", ".NET Console", "The console application that drives the file scanning and JSON generation process.")
+
+Component(app_engine, "AppEngine", "C# Class", "Orchestrates the application workflow, including scanning, filtering, and formatting.", console_app)
+Component(file_scan_service, "FileScanService", "C# Class", "Responsible for scanning directories and retrieving file paths.", console_app)
+Component(custom_filter_service, "CustomFilterService", "C# Class", "Applies custom include/exclude filters to file paths.", console_app)
+Component(git_ignore_service, "GitIgnoreService", "C# Class", "Loads and applies .gitignore rules to filter file paths.", console_app)
+Component(file_format_service, "FileFormatService", "C# Class", "Formats the file content into JSON or other specified formats.", console_app)
+Component(helper, "Helper", "C# Class", "Provides utility functions for user settings, file I/O, and path manipulation.", console_app)
+
+Rel(app_engine, file_scan_service, "Uses")
+Rel(app_engine, custom_filter_service, "Uses")
+Rel(app_engine, git_ignore_service, "Uses")
+Rel(app_engine, file_format_service, "Uses")
+Rel(app_engine, helper, "Uses")
+Rel(custom_filter_service, git_ignore_service, "Uses")
+
+@enduml

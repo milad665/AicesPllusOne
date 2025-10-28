@@ -1,0 +1,9 @@
+@startuml container_view
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Container(console_app, "Console Application", ".NET Console", "The console application that drives the file scanning and JSON generation process.")
+
+Rel(console_app, console_app, "Reads project files")
+Rel(console_app, console_app, "Writes JSON output")
+
+@enduml

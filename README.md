@@ -2,13 +2,11 @@
 
 > An intelligent AI agent that automatically generates and maintains C4 architecture diagrams from your codebase.
 
-Powered by **Gemini 2.5**, and exposed as a **Model Context Protocol (MCP)** server.
-
-(We also built a version with **Google's Agent Development Kit (ADK)**, which is included in this repo, but well ... we are still not so proud of it! So in case we should demo, we will demo the non-adk version)
+Built with **Google's Agent Development Kit (ADK)** principles, powered by **Gemini 2.5**, and exposed as a **Model Context Protocol (MCP)** server.
 
 ## 🎪 The Pitch (Because Every Hackathon Needs One)
 
-**"Automations"** - they said. *Yawn*. Could the theme be a bit less... boring? 😴
+**"Automations"** - they said. *Yawn*. Could the theme be any more... predictable? 😴
 
 But here's the thing: we're not building toy automations. We come from the enterprise trenches where "automation" means orchestrating 47 microservices, 3 databases, 2 message queues, and that one legacy SOAP API from 2009 that nobody wants to touch but everybody depends on.
 
@@ -252,6 +250,40 @@ The agent generates architecture following this structure:
 ```
 
 See **[src/schemas.py](src/schemas.py)** for the complete Pydantic schema.
+
+## 🚀 Future Direction
+
+The C4 Architecture Agent is just the beginning. Here's what's on the roadmap:
+
+### 🎨 **IDE Extensions for Interactive C4 Manipulation**
+Build IDE extensions (VS Code, IntelliJ, etc.) that allow users to:
+- Visually manipulate C4 diagrams directly in their development environment
+- Drag-and-drop components to restructure architecture
+- Real-time sync between diagram changes and code structure
+- Interactive architecture exploration with zoom levels (Context → Container → Component → Code)
+
+### 📚 **Extensive Project Documentation Store**
+Expand beyond architecture diagrams to maintain comprehensive project knowledge:
+- Store detailed project descriptions, business context, and domain models
+- Maintain technology stack documentation and decision rationale
+- Track architectural evolution over time with version history
+- Cross-reference between code changes and architectural impacts
+
+### 🤖 **MCP Tool for Agent Memory Integration**
+Expose specialized MCP tools that enable coding agents to automatically update the "Plus One" Agent's long-term memory:
+- Auto-capture important project details during development sessions
+- Learn from code review comments and architectural decisions
+- Build institutional knowledge that persists across development teams
+- Enable AI agents to make architecturally-aware code suggestions
+
+### 🐛 **Bug History and Solution Database**
+Create a comprehensive bug tracking and solution store:
+- Maintain a searchable database of past bugs and their solutions
+- Link bugs to specific architectural components and code patterns
+- AI-powered bug pattern recognition and prevention suggestions
+- Generate "lessons learned" documentation from bug resolution patterns
+
+These enhancements will transform the agent from a diagram generator into a comprehensive architectural intelligence system that learns and evolves with your codebase.
 
 ## 🤝 Contributing
 
