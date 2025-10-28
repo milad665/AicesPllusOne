@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  git-repo-manager:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./repositories:/app/repositories
+      - ~/.ssh:/root/.ssh:ro  # Mount SSH keys for git access
+    environment:
+      - DATABASE_PATH=/app/data/repositories.db
+      - REPOSITORIES_DIR=/app/repositories
+      - SYNC_INTERVAL_MINUTES=5
+      - LOG_LEVEL=INFO
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  data:
+  repositories:

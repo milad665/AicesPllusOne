@@ -1,0 +1,20 @@
+{
+  "name": "c4-architecture-agent",
+  "version": "1.0.0",
+  "description": "MCP Server for C4 Architecture Agent",
+  "main": "src/server.py",
+  "scripts": {
+    "start": "python src/server.py",
+    "test": "python cli.py"
+  },
+  "keywords": [
+    "mcp",
+    "c4",
+    "architecture",
+    "ai",
+    "gemini",
+    "agent"
+  ],
+  "author": "",
+  "license": "MIT"
+}
