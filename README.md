@@ -1,6 +1,6 @@
 # Aices Plus One: Complete C4 Architecture Intelligence System
 
-> An intelligent AI-powered system that automatically generates and maintains C4 architecture diagrams from your codebase, combining a comprehensive code analysis service with an AI agent.
+> An intelligent AI-powered MCP service that automatically generates and provides detailed architectural context from the entire organization's codebase, combining a comprehensive code analysis service with an AI agent.
 
 ## 🏗️ System Overview
 
