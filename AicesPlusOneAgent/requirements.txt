@@ -23,3 +23,8 @@ typing-extensions
 # Testing
 pytest
 pytest-asyncio
+
+# API & Storage
+fastapi
+uvicorn
+google-cloud-storage

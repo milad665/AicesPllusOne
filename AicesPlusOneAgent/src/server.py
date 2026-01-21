@@ -80,24 +80,27 @@ class ADKMCPServer:
         """
         return [
             adk_to_mcp_tool(
-                name="get_c4_architecture",
-                description="Get the latest C4 architecture diagram in JSON format. "
-                           "Retrieves cached architecture or generates new one from code analysis.",
+                name="get_stored_c4_architecture",
+                description="Get the latest C4 architecture diagram from storage in JSON format. "
+                           "This is a fast, read-only operation that returns the currently stored architecture.",
                 input_schema={
                     "type": "object",
-                    "properties": {
-                        "force_refresh": {
-                            "type": "boolean",
-                            "description": "Force regeneration even if cached version exists",
-                            "default": False
-                        }
-                    }
+                    "properties": {}
                 }
             ),
             adk_to_mcp_tool(
-                name="update_c4_architecture",
-                description="Update C4 architecture diagram from PlantUML markup. "
-                           "Parses PlantUML script and updates the stored architecture.",
+                name="generate_new_c4_architecture",
+                description="Force a fresh code analysis and AI generation of the C4 architecture. "
+                           "This is an expensive operation that uses Gemini to analyze code and generate a new diagram.",
+                input_schema={
+                    "type": "object",
+                    "properties": {}
+                }
+            ),
+            adk_to_mcp_tool(
+                name="update_c4_architecture_with_plantuml",
+                description="Update the stored C4 architecture by parsing a PlantUML script. "
+                           "Parses the script and merges changes into the architecture model.",
                 input_schema={
                     "type": "object",
                     "properties": {
@@ -156,10 +159,11 @@ class ADKMCPServer:
         
         logger.info(f"Executing tool: {name}")
         
-        # Route to appropriate tool handler
-        if name == "get_c4_architecture":
+        if name == "get_stored_c4_architecture":
             return await self._handle_get_c4_architecture(arguments)
-        elif name == "update_c4_architecture":
+        elif name == "generate_new_c4_architecture":
+            return await self._handle_regenerate_c4_architecture(arguments)
+        elif name == "update_c4_architecture_with_plantuml":
             return await self._handle_update_c4_architecture(arguments)
         else:
             error_msg = f"Unknown tool: {name}"
@@ -170,22 +174,29 @@ class ADKMCPServer:
         """
         Execute get_c4_architecture tool.
         
-        ADK pattern: Tool-specific handler with validation and error handling.
-        
         Args:
-            arguments: Tool arguments (force_refresh)
+            arguments: Tool arguments (empty)
             
         Returns:
             MCP-formatted result with C4 architecture JSON
         """
-        force_refresh = arguments.get("force_refresh", False)
-        logger.info(f"Getting C4 architecture (force_refresh={force_refresh})")
+        logger.info("Getting stored C4 architecture")
         
         try:
-            architecture = await agent.generate_c4_architecture(force_refresh=force_refresh)
+            architecture = await agent.get_current_architecture()
+            if not architecture:
+                return {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "No architecture stored. Use regenerate_c4_architecture to create one."
+                        }
+                    ]
+                }
+                
             result_json = json.dumps(architecture.model_dump(mode='json'), indent=2)
             
-            logger.info("Successfully generated C4 architecture")
+            logger.info("Successfully retrieved C4 architecture")
             return {
                 "content": [
                     {
@@ -195,7 +206,36 @@ class ADKMCPServer:
                 ]
             }
         except Exception as e:
-            logger.error(f"Failed to generate C4 architecture: {e}", exc_info=True)
+            logger.error(f"Failed to get C4 architecture: {e}", exc_info=True)
+            raise
+
+    async def _handle_regenerate_c4_architecture(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Execute regenerate_c4_architecture tool.
+        
+        Args:
+            arguments: Tool arguments (empty)
+            
+        Returns:
+            MCP-formatted result with new C4 architecture JSON
+        """
+        logger.info("Regenerating C4 architecture")
+        
+        try:
+            architecture = await agent.generate_c4_architecture()
+            result_json = json.dumps(architecture.model_dump(mode='json'), indent=2)
+            
+            logger.info("Successfully regenerated C4 architecture")
+            return {
+                "content": [
+                    {
+                        "type": "text",
+                        "text": result_json
+                    }
+                ]
+            }
+        except Exception as e:
+            logger.error(f"Failed to regenerate C4 architecture: {e}", exc_info=True)
             raise
     
     async def _handle_update_c4_architecture(self, arguments: Dict[str, Any]) -> Dict[str, Any]:

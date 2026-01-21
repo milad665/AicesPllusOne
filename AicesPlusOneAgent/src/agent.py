@@ -13,7 +13,7 @@ import google.generativeai as genai
 
 from .schemas import C4Architecture, ContextView, ContainerView, ComponentView
 from .code_analyzer import CodeAnalyzer
-from .memory_store import MemoryStore
+
 
 load_dotenv()
 
@@ -25,6 +25,7 @@ class C4ArchitectureAgent:
     Uses Google's Gemini 2.5 model and code analysis service to
     generate structured C4 architecture diagrams.
     """
+    
     
     def __init__(self, api_key: Optional[str] = None):
         """
@@ -49,7 +50,11 @@ class C4ArchitectureAgent:
         
         # Initialize components
         self.code_analyzer = CodeAnalyzer()
-        self.memory = MemoryStore()
+        
+        # Initialize storage
+        storage_type = os.getenv("STORAGE_TYPE", "local")
+        from .storage import get_storage_provider
+        self.storage = get_storage_provider(storage_type)
         
         # System prompt for C4 generation
         self.system_prompt = self._build_system_prompt()
@@ -83,25 +88,14 @@ Based on the programming language and service type, only include relevant elemen
 For example in the container view, only include services and processes that are visible from outside not the internal components.
 """
     
-    async def generate_c4_architecture(
-        self,
-        force_refresh: bool = False
-    ) -> C4Architecture:
+    async def generate_c4_architecture(self) -> C4Architecture:
         """
-        Generate C4 architecture from code analysis
+        Generate C4 architecture from code analysis and save to storage.
+        This forces a fresh analysis and AI generation.
         
-        Args:
-            force_refresh: Force regeneration even if cached version exists
-            
         Returns:
             Complete C4 architecture
         """
-        # Check if we have cached architecture
-        if not force_refresh:
-            cached = self.memory.load_architecture()
-            if cached:
-                return cached
-        
         # Get projects from code analyzer
         print("Fetching projects from code analyzer...")
         projects = await self.code_analyzer.get_projects()
@@ -128,8 +122,8 @@ For example in the container view, only include services and processes that are 
         # Generate architecture using Gemini
         architecture = await self._generate_with_gemini(project_details)
         
-        # Save to memory
-        self.memory.save_architecture(architecture)
+        # Save to storage
+        self.storage.save(architecture)
         
         return architecture
     
@@ -358,7 +352,7 @@ IMPORTANT REQUIREMENTS:
             Updated C4 architecture
         """
         # Get current architecture or create new one
-        current = self.memory.load_architecture()
+        current = self.storage.load()
         
         # Use Gemini to parse PlantUML and update architecture
         prompt = f"""{self.system_prompt}
@@ -389,8 +383,8 @@ Return the complete updated architecture in JSON format.
             architecture_data = json.loads(response.text)
             updated_architecture = C4Architecture(**architecture_data)
             
-            # Save to memory
-            self.memory.save_architecture(updated_architecture)
+            # Save to storage
+            self.storage.save(updated_architecture)
             
             return updated_architecture
         except (json.JSONDecodeError, Exception) as e:
@@ -399,6 +393,51 @@ Return the complete updated architecture in JSON format.
                 return current
             raise
     
+    async def find_relevant_element(self, file_path: str) -> Optional[Dict[str, Any]]:
+        """
+        Find the architectural element relevant to a specific file.
+        
+        Args:
+            file_path: Absolute or relative path to the file.
+            
+        Returns:
+            Dictionary containing the element and its view script, or None.
+        """
+        architecture = await self.get_current_architecture()
+        if not architecture:
+            return None
+            
+        file_path_lower = file_path.lower()
+        
+        # Strategy 1: Check Components (Level 3)
+        # We look for fuzzy matches in Description or Name, or implicit project ID match?
+        # Since we don't store file paths in C4, we use heuristics.
+        
+        for component in architecture.ComponentView.Components:
+            # Heuristic: If component name appears in file path (e.g., "AuthController" in "auth_controller.py")
+            if component.Name.lower().replace(" ", "") in file_path_lower.replace("_", ""):
+                 return {
+                     "element": component.model_dump(mode='json'),
+                     "view_type": "component",
+                     "uml": architecture.ComponentView.C4PlantUmlScript
+                 }
+                 
+        # Strategy 2: Check Containers (Level 2)
+        for container in architecture.ContainerView.Containers:
+            # Heuristic: Match project ID or name
+            # E.g., if file path contains "AicesPlusOneAgent" and container name matches
+            if container.Name.lower().replace(" ", "") in file_path_lower.replace("_", ""):
+                 return {
+                     "element": container.model_dump(mode='json'),
+                     "view_type": "container",
+                     "uml": architecture.ContainerView.C4PlantUmlScript
+                 }
+
+        # Strategy 3: Default to Container View if file seems to belong to a known project
+        # This part requires knowing the ProjectRoot, which we might not have perfect access to.
+        # For now, we return None if no strict heuristic match.
+        return None
+
     async def get_current_architecture(self) -> Optional[C4Architecture]:
         """
         Get the current C4 architecture from memory
@@ -406,7 +445,7 @@ Return the complete updated architecture in JSON format.
         Returns:
             Current architecture or None
         """
-        return self.memory.load_architecture()
+        return self.storage.load()
     
     async def close(self):
         """Clean up resources"""
