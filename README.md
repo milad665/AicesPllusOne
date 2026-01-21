@@ -125,6 +125,58 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 Modern software is a **choreographed symphony of services**. AI coding agents are flying blind without architectural context.
 **Aices Plus One** provides that context, enabling AI to write production-ready code that fits your system design.
 
+## 🚀 Future Roadmap
+
+### 🎨 **IDE Extensions for Interactive C4 Manipulation**
+- Visually manipulate C4 diagrams directly in development environment
+- Real-time sync between diagram changes and code structure
+- Interactive architecture exploration with zoom levels
+
+### 📚 **Extensive Project Documentation Store**
+- Store detailed project descriptions, business context, and domain models
+- Track architectural evolution over time with version history
+- Cross-reference between code changes and architectural impacts
+
+### 🤖 **MCP Tool for Agent Memory Integration**
+- Auto-capture important project details during development sessions
+- Build institutional knowledge that persists across development teams
+- Enable AI agents to make architecturally-aware code suggestions
+
+### 🐛 **Bug History and Solution Database**
+- Maintain a searchable database of past bugs and their solutions
+- AI-powered bug pattern recognition and prevention suggestions
+
+## 📚 Documentation
+
+- **[Code Analyzer Service README](AicesPlusOne/README.md)** - Detailed service documentation
+- **[C4 Agent README](AicesPlusOneAgent/README.md)** - Agent setup and MCP configuration
+- **[Deployment Guide](DEPLOYMENT.md)** - Enterprise mTLS deployment architecture
+- **[Setup Guide](AicesPlusOneAgent/SETUP.md)** - Detailed setup and configuration
+- **[MCP Configuration](AicesPlusOneAgent/MCP_CONFIGURATION.md)** - MCP server examples
+
+## 🧪 Testing
+
+```bash
+# Test the code analyzer service
+cd AicesPlusOne
+python -m pytest tests/ -v
+
+# Test the C4 agent
+cd AicesPlusOneAgent
+python -m pytest tests/ -v
+python quickstart.py
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Areas for improvement:
+
+- Additional language support for Tree-sitter analysis
+- Enhanced PlantUML parsing and generation
+- More sophisticated AI prompting strategies
+- Diagram visualization tools
+- Integration with more development tools
+
 ## 📄 License
 MIT License - See LICENSE file for details.
 
