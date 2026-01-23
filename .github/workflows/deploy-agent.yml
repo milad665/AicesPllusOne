@@ -118,6 +118,10 @@ jobs:
              echo "Repository already managed by Terraform."
           fi
 
+          # 4. Manually disable Cloud Run deletion protection (Fix for replacement deadlock)
+          echo "Disabling deletion protection on existing Cloud Run service (if exists)..."
+          gcloud run services update aices-plus-one-agent --region=${REGION} --no-deletion-protection --quiet || echo "Service updates skipped (likely does not exist yet)"
+
       - name: Terraform Apply
         run: |
           # Sanitize tag again for Terraform variable
