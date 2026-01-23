@@ -11,12 +11,9 @@ permissions:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  SERVICE_ACCOUNT: ${{ secrets.GCP_SA_EMAIL }}
-  WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WIF_PROVIDER }}
   REGION: europe-west1
   TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
   TF_VAR_region: europe-west1
-  TF_VAR_agent_image: "europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/aices-repo/agent:${{ github.ref_name }}"
 
 jobs:
   build-and-push:
@@ -38,8 +35,18 @@ jobs:
 
       - name: Build and Push Agent Image
         run: |
-          IMAGE_TAG=${{ github.ref_name }}
+          if [ -z "${PROJECT_ID}" ]; then
+            echo "Error: GCP_PROJECT_ID secret is missing!"
+            exit 1
+          fi
+
+          # Sanitize tag: replace '/' with '-'
+          RAW_TAG=${{ github.ref_name }}
+          IMAGE_TAG=${RAW_TAG//\//-}
+
           IMAGE_NAME="${REGION}-docker.pkg.dev/${PROJECT_ID}/aices-repo/agent:${IMAGE_TAG}"
+          echo "Building image: $IMAGE_NAME"
+
           docker build -t $IMAGE_NAME -f AicesPlusOneAgent/Dockerfile .
           docker push $IMAGE_NAME
 
@@ -65,4 +72,10 @@ jobs:
         run: terraform init
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve
+        run: |
+          # Sanitize tag again for Terraform variable
+          RAW_TAG=${{ github.ref_name }}
+          IMAGE_TAG=${RAW_TAG//\//-}
+          export TF_VAR_agent_image="${REGION}-docker.pkg.dev/${PROJECT_ID}/aices-repo/agent:${IMAGE_TAG}"
+
+          terraform apply -auto-approve
