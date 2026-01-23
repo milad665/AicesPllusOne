@@ -18,6 +18,9 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./AicesPlusOneAgent
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,7 +50,7 @@ jobs:
           IMAGE_NAME="${REGION}-docker.pkg.dev/${PROJECT_ID}/aices-repo/agent:${IMAGE_TAG}"
           echo "Building image: $IMAGE_NAME"
 
-          docker build -t $IMAGE_NAME -f AicesPlusOneAgent/Dockerfile .
+          docker build -t $IMAGE_NAME .
           docker push $IMAGE_NAME
 
   deploy:
