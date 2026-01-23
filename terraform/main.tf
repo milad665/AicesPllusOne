@@ -126,7 +126,7 @@ resource "google_cloud_run_v2_service" "agent_service" {
 # Allow unauthenticated access to the Agent (Public Web UI)
 # In production, you might want to restrict this or use IAP
 resource "google_cloud_run_service_iam_member" "public_access" {
-  location = link.google_cloud_run_v2_service.agent_service.location
+  location = google_cloud_run_v2_service.agent_service.location
   service  = google_cloud_run_v2_service.agent_service.name
   role     = "roles/run.invoker"
   member   = "allUsers"
