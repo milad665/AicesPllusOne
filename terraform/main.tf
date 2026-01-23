@@ -23,6 +23,19 @@ resource "google_project_service" "secretmanager" {
   disable_on_destroy = false
 }
 
+resource "google_project_service" "artifactregistry" {
+  service = "artifactregistry.googleapis.com"
+  disable_on_destroy = false
+}
+
+resource "google_artifact_registry_repository" "repo" {
+  location      = var.region
+  repository_id = "aices-repo"
+  description   = "Aices Plus One Docker Repository"
+  format        = "DOCKER"
+  depends_on    = [google_project_service.artifactregistry]
+}
+
 # 1. Cloud Storage Bucket for Architecture Data
 resource "google_storage_bucket" "architecture_store" {
   name          = "aices-plus-one-storage-${var.project_id}"

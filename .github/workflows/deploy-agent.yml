@@ -33,6 +33,27 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Bootstrap Artifact Registry
+        run: |
+          echo "Enabling Artifact Registry API..."
+          gcloud services enable artifactregistry.googleapis.com
+          echo "Waiting for API propagation..."
+          sleep 30
+
+          echo "Checking if repository aices-repo exists..."
+          if ! gcloud artifacts repositories describe aices-repo --location=${REGION} > /dev/null 2>&1; then
+            echo "Creating aices-repo repository..."
+            gcloud artifacts repositories create aices-repo \
+              --repository-format=docker \
+              --location=${REGION} \
+              --description="Aices Repos"
+          else
+            echo "aices-repo repository already exists."
+          fi
+
+          echo "Verifying repository..."
+          gcloud artifacts repositories list --location=${REGION}
+
       - name: Configure Docker
         run: gcloud auth configure-docker ${REGION}-docker.pkg.dev
 
