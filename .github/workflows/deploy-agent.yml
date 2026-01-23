@@ -93,7 +93,21 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        run: terraform init
+        run: |
+          # 1. Bootstrap State Bucket
+          BUCKET_NAME="${PROJECT_ID}-tfstate"
+          echo "Checking bucket: $BUCKET_NAME"
+
+          if ! gcloud storage buckets describe gs://${BUCKET_NAME} > /dev/null 2>&1; then
+            echo "Creating state bucket gs://${BUCKET_NAME}..."
+            gcloud storage buckets create gs://${BUCKET_NAME} --location=${REGION}
+            gcloud storage buckets update gs://${BUCKET_NAME} --versioning-enabled
+          else
+            echo "Bucket exists."
+          fi
+
+          # 2. Init with partial config
+          terraform init -backend-config="bucket=${BUCKET_NAME}"
 
       - name: Terraform Apply
         run: |
