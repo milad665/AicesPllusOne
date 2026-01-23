@@ -39,6 +39,8 @@ class ProjectType(str, Enum):
     MICROSERVICE = "microservice"
     MOBILE_APP = "mobile_app"
     DESKTOP_APP = "desktop_app"
+    MVC = "mvc"
+    BLAZOR_RAZOR = "blazor_razor"
     UNKNOWN = "unknown"
 
 

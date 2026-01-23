@@ -12,22 +12,25 @@ class GCSStorage(StorageProvider):
     Stores data in a JSON blob within a bucket.
     """
 
-    def __init__(self, bucket_name: Optional[str] = None, blob_name: str = "c4_architecture.json"):
+    def __init__(self, bucket_name: Optional[str] = None):
         self.bucket_name = bucket_name or os.getenv("GCS_BUCKET_NAME")
-        self.blob_name = blob_name
         
         if not self.bucket_name:
             raise ValueError("GCS_BUCKET_NAME is required for GCSStorage")
             
         self.client = storage.Client()
         self.bucket = self.client.bucket(self.bucket_name)
-        self.blob = self.bucket.blob(self.blob_name)
 
-    def save(self, architecture: C4Architecture) -> None:
+    def _get_blob(self, tenant_id: str):
+        """Get blob for specific tenant."""
+        blob_name = f"{tenant_id}/c4_architecture.json"
+        return self.bucket.blob(blob_name)
+
+    def save(self, architecture: C4Architecture, tenant_id: str = "default") -> None:
         """Save to GCS."""
         # Get existing metadata if possible, or create new
         try:
-            current_data = self._load_raw()
+            current_data = self._load_raw(tenant_id)
             metadata = current_data.get("metadata", {})
         except Exception:
              metadata = {
@@ -42,15 +45,16 @@ class GCSStorage(StorageProvider):
             "metadata": metadata
         }
         
-        self.blob.upload_from_string(
+        blob = self._get_blob(tenant_id)
+        blob.upload_from_string(
             json.dumps(data, indent=2),
             content_type="application/json"
         )
 
-    def load(self) -> Optional[C4Architecture]:
+    def load(self, tenant_id: str = "default") -> Optional[C4Architecture]:
         """Load from GCS."""
         try:
-            data = self._load_raw()
+            data = self._load_raw(tenant_id)
             arch_data = data.get("c4_architecture")
             if arch_data is None:
                 return None
@@ -58,16 +62,17 @@ class GCSStorage(StorageProvider):
         except Exception:
             return None
 
-    def get_metadata(self) -> Dict[str, Any]:
+    def get_metadata(self, tenant_id: str = "default") -> Dict[str, Any]:
         try:
-            data = self._load_raw()
+            data = self._load_raw(tenant_id)
             return data.get("metadata", {})
         except Exception:
             return {}
 
-    def _load_raw(self) -> Dict[str, Any]:
+    def _load_raw(self, tenant_id: str) -> Dict[str, Any]:
         """Download and parse JSON from GCS."""
-        if not self.blob.exists():
+        blob = self._get_blob(tenant_id)
+        if not blob.exists():
             return {}
-        content = self.blob.download_as_text()
+        content = blob.download_as_text()
         return json.loads(content)

@@ -140,7 +140,29 @@ class TreeSitterAnalyzer:
                     except:
                         continue
             
-            # Determine project type based on findings (prioritize by complexity)
+            # Additional C# Framework Checks
+            file_names_lower = {f.name.lower() for f in files}
+            
+            # MVC Detection
+            if any(f.name == "Controllers" and f.is_dir() for f in files) and \
+               any(f.name == "Views" and f.is_dir() for f in files):
+                return ProjectType.MVC
+                
+            # Blazor/Razor Detection
+            if any(f.suffix in ['.cshtml', '.razor'] for f in files):
+                return ProjectType.BLAZOR_RAZOR
+                
+            # Mobile Detection (Maui/Xamarin)
+            if any(f.lower() in ['mauiprogram.cs', 'xamarin.forms.core.dll'] for f in file_names_lower) or \
+               any('ios' in f.parent.name.lower() or 'android' in f.parent.name.lower() for f in files):
+                return ProjectType.MOBILE_APP
+                
+            # Desktop Detection (WPF/WinForms)
+            if any(f.suffix == '.xaml' for f in files) and not any(f.lower() == 'mauiprogram.cs' for f in file_names_lower):
+                 return ProjectType.DESKTOP_APP
+            
+            if any(f.lower() == 'form1.cs' or f.lower().endswith('form.cs') for f in file_names_lower):
+                 return ProjectType.DESKTOP_APP
             if has_api_controllers:
                 return ProjectType.API
             elif has_interfaces and has_public_classes:
@@ -446,6 +468,23 @@ class TreeSitterAnalyzer:
                 traverse_node(child)
         
         traverse_node(tree.root_node)
+
+        
+        # Enhanced extraction for MVC/Razor patterns (Regex fallback where Tree-sitter might be too complex or for .cshtml)
+        if file_path.endswith('.cs'):
+            # Check for Controller inheritance manually if AST didn't capture it easily
+            # (Tree-sitter doesn't always resolve base classes easily without robust symbol table)
+            if ' : Controller' in source_code or ' : ControllerBase' in source_code:
+                # Re-scan for public methods and mark as endpoints
+                for ep in entry_points:
+                    if ep.type == 'public_method':
+                        ep.type = 'mvc_action'
+        
+        # Razor Pages
+        if file_path.endswith('.cshtml.cs'):
+             # PageModel methods
+             pass
+             
         return entry_points
     
     def _count_lines_of_code(self, file_path: Path) -> int:
@@ -498,6 +537,29 @@ class TreeSitterAnalyzer:
                     import re
                     artifacts = re.findall(r'<artifactId>([^<]+)</artifactId>', content)
                     dependencies.extend(artifacts)
+                except:
+                    pass
+                    
+        # C# Dependencies
+        elif language == ProjectLanguage.CSHARP:
+            # 1. Parse .csproj files (PackageReference)
+            import re
+            for csproj in project_path.rglob("*.csproj"):
+                try:
+                    content = csproj.read_text(encoding='utf-8', errors='ignore')
+                    # <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+                    matches = re.findall(r'<PackageReference\s+Include="([^"]+)"', content)
+                    dependencies.extend(matches)
+                except:
+                    pass
+            
+            # 2. Parse packages.config (Legacy)
+            for pkg_config in project_path.rglob("packages.config"):
+                try:
+                    content = pkg_config.read_text(encoding='utf-8', errors='ignore')
+                    # <package id="Antlr" version="3.4.1.9004" targetFramework="net45" />
+                    matches = re.findall(r'<package\s+id="([^"]+)"', content)
+                    dependencies.extend(matches)
                 except:
                     pass
         

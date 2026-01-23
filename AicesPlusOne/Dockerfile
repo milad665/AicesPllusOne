@@ -1,42 +1,46 @@
+# AicesPlusOne Code Analyzer Dockerfile
 FROM python:3.11-slim
 
-# Set working directory
-WORKDIR /app
+# Set environment
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+# git: for cloning repos
+# build-essential, python3-dev: for building python packages (if needed)
+# curl: for healthchecks
+RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
-    openssh-client \
+    build-essential \
+    python3-dev \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
-COPY requirements.txt .
+WORKDIR /app
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy dependency files
+COPY requirements.txt .
+COPY setup.py .
+
+# Install dependencies (including dev deps if needed for testing, but mostly prod)
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt && \
+    pip install -e .
 
 # Copy application code
-COPY aices_plus_one/ ./aices_plus_one/
-COPY setup.py ./
+COPY . .
 
-# Create necessary directories
-RUN mkdir -p /app/repositories /app/data
+# Create directory for repositories
+RUN mkdir -p repositories
 
-# Set environment variables
-ENV PYTHONPATH=/app
-ENV DATABASE_PATH=/app/data/repositories.db
-ENV REPOSITORIES_DIR=/app/repositories
-ENV SSH_KEYS_DIR=/tmp/git_ssh_keys
+# Expose API port
+EXPOSE 8000
 
-# Default port (Cloud Run will override this with PORT=8080)
-ENV PORT=8000
-
-# Expose port (Cloud Run will use PORT env var)
-EXPOSE $PORT
-
-# Health check - use PORT env var
+# Healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import requests, os; requests.get(f'http://localhost:{os.getenv(\"PORT\", \"8000\")}/health')" || exit 1
+  CMD curl -f http://localhost:8000/health || exit 1
 
-# Run the application
-CMD ["python", "-m", "aices_plus_one.main"]
+# Run the FastAPI app
+# Uses uvicorn to serve the app
+CMD ["uvicorn", "aices_plus_one.main:app", "--host", "0.0.0.0", "--port", "8000"]

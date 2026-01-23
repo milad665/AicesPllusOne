@@ -1,0 +1,70 @@
+name: Deploy Agent
+
+on:
+  push:
+    tags:
+      - 'release/*'
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  SERVICE_ACCOUNT: ${{ secrets.GCP_SA_EMAIL }}
+  WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WIF_PROVIDER }}
+  REGION: europe-west1
+  TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+  TF_VAR_region: europe-west1
+  TF_VAR_agent_image: "europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/aices-repo/agent:${{ github.ref_name }}"
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${REGION}-docker.pkg.dev
+
+      - name: Build and Push Agent Image
+        run: |
+          IMAGE_TAG=${{ github.ref_name }}
+          IMAGE_NAME="${REGION}-docker.pkg.dev/${PROJECT_ID}/aices-repo/agent:${IMAGE_TAG}"
+          docker build -t $IMAGE_NAME -f AicesPlusOneAgent/Dockerfile .
+          docker push $IMAGE_NAME
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./terraform
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve

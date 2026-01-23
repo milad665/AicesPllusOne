@@ -56,8 +56,96 @@ class C4ArchitectureAgent:
         from .storage import get_storage_provider
         self.storage = get_storage_provider(storage_type)
         
+        # Initialize Knowledge Base
+        # Initialize Knowledge Graph
+        from .knowledge_graph.engine import KnowledgeGraphEngine
+        from .knowledge_graph.standards import StandardsManager
+        from .tenancy.manager import TenantManager
+        
+        self.kg_engine = KnowledgeGraphEngine()
+        self.standards_manager = StandardsManager(self.kg_engine)
+        self.tenant_manager = TenantManager()
+        
+        # Note: Auto-indexing logic currently disabled until KG supports parsing markdown nodes.
+        # Future TODO: Parse repo markdown files into Graph nodes.
+        
         # System prompt for C4 generation
         self.system_prompt = self._build_system_prompt()
+
+    async def initialize_knowledge(self, project_paths: List[str]):
+        """
+        Initialize the knowledge base (Placeholder for future graph population).
+        """
+        print(f"Graph initialization with project paths not yet implemented.")
+        
+    async def query_knowledge_graph(self, query: str, tenant_id: str = "default_tenant") -> List[Dict[str, Any]]:
+        """
+        Semantic search across the Knowledge Graph.
+        """
+        # For MVP, broad semantic search across the graph
+        return self.kg_engine.semantic_search(tenant_id, query, limit=5)
+    
+    async def add_coding_standard(self, description: str, type: str, category: str, tenant_id: str = "default_tenant") -> str:
+        """
+        Add a coding standard to the graph.
+        """
+        return self.standards_manager.add_standard(
+            tenant_id=tenant_id,
+            description=description,
+            type=type,
+            category=category
+        )
+        
+    async def search_coding_standards(self, query: str = None, category: str = None, tenant_id: str = "default_tenant") -> List[Dict[str, Any]]:
+        """
+        Search for coding standards in the graph.
+        """
+        return self.standards_manager.search_standards(
+            tenant_id=tenant_id,
+            query=query,
+            category=category
+        )
+
+    async def remember_fact(self, fact: str, category: str = "general", tenant_id: str = "default_tenant") -> str:
+        """
+        Store a fact in the persistent memory.
+        """
+        # Tenant specific path
+        facts_file = f"data/{tenant_id}/facts.json"
+        
+        # Ensure dir exists
+        os.makedirs(os.path.dirname(facts_file), exist_ok=True)
+        
+        facts = []
+        if os.path.exists(facts_file):
+            with open(facts_file, 'r') as f:
+                facts = json.load(f)
+        
+        facts.append({
+            "fact": fact,
+            "category": category,
+            "timestamp": str(os.path.getmtime(facts_file)) if os.path.exists(facts_file) else "now"
+        })
+        
+        with open(facts_file, 'w') as f:
+            json.dump(facts, f, indent=2)
+            
+        return "Fact remembered."
+
+    async def recall_facts(self, category: str = None, tenant_id: str = "default_tenant") -> List[Dict[str, Any]]:
+        """
+        Retrieve stored facts.
+        """
+        facts_file = f"data/{tenant_id}/facts.json"
+        if not os.path.exists(facts_file):
+            return []
+            
+        with open(facts_file, 'r') as f:
+            facts = json.load(f)
+            
+        if category:
+            return [f for f in facts if f.get("category") == category]
+        return facts
     
     def _build_system_prompt(self) -> str:
         """Build the system prompt for the agent"""
@@ -88,7 +176,7 @@ Based on the programming language and service type, only include relevant elemen
 For example in the container view, only include services and processes that are visible from outside not the internal components.
 """
     
-    async def generate_c4_architecture(self) -> C4Architecture:
+    async def generate_c4_architecture(self, tenant_id: str = "default_tenant") -> C4Architecture:
         """
         Generate C4 architecture from code analysis and save to storage.
         This forces a fresh analysis and AI generation.
@@ -96,9 +184,13 @@ For example in the container view, only include services and processes that are 
         Returns:
             Complete C4 architecture
         """
+        # Get Tenant Config
+        tenant = self.tenant_manager.get_tenant(tenant_id)
+        tenant_config = tenant.analyzer_config if tenant else None
+
         # Get projects from code analyzer
         print("Fetching projects from code analyzer...")
-        projects = await self.code_analyzer.get_projects()
+        projects = await self.code_analyzer.get_projects(tenant_config=tenant_config)
         print(f"Found {len(projects)} projects")
         
         # Collect detailed project information
@@ -109,7 +201,7 @@ For example in the container view, only include services and processes that are 
             if project_id:
                 try:
                     print(f"  Fetching entrypoints for {project_id}...")
-                    entrypoints = await self.code_analyzer.get_project_entrypoints(project_id)
+                    entrypoints = await self.code_analyzer.get_project_entrypoints(project_id, tenant_config=tenant_config)
                     print(f"  Found {len(entrypoints)} entrypoints")
                     project['entrypoints'] = entrypoints
                 except Exception as e:
@@ -123,7 +215,7 @@ For example in the container view, only include services and processes that are 
         architecture = await self._generate_with_gemini(project_details)
         
         # Save to storage
-        self.storage.save(architecture)
+        self.storage.save(architecture, tenant_id=tenant_id)
         
         return architecture
     
@@ -339,7 +431,8 @@ IMPORTANT REQUIREMENTS:
     async def update_from_plantuml(
         self,
         plantuml_script: str,
-        view_type: str = "all"
+        view_type: str = "all",
+        tenant_id: str = "default_tenant"
     ) -> C4Architecture:
         """
         Update C4 architecture from PlantUML script
@@ -352,7 +445,7 @@ IMPORTANT REQUIREMENTS:
             Updated C4 architecture
         """
         # Get current architecture or create new one
-        current = self.storage.load()
+        current = self.storage.load(tenant_id=tenant_id)
         
         # Use Gemini to parse PlantUML and update architecture
         prompt = f"""{self.system_prompt}
@@ -384,7 +477,7 @@ Return the complete updated architecture in JSON format.
             updated_architecture = C4Architecture(**architecture_data)
             
             # Save to storage
-            self.storage.save(updated_architecture)
+            self.storage.save(updated_architecture, tenant_id=tenant_id)
             
             return updated_architecture
         except (json.JSONDecodeError, Exception) as e:
@@ -393,7 +486,7 @@ Return the complete updated architecture in JSON format.
                 return current
             raise
     
-    async def find_relevant_element(self, file_path: str) -> Optional[Dict[str, Any]]:
+    async def find_relevant_element(self, file_path: str, tenant_id: str = "default_tenant") -> Optional[Dict[str, Any]]:
         """
         Find the architectural element relevant to a specific file.
         
@@ -403,7 +496,7 @@ Return the complete updated architecture in JSON format.
         Returns:
             Dictionary containing the element and its view script, or None.
         """
-        architecture = await self.get_current_architecture()
+        architecture = await self.get_current_architecture(tenant_id)
         if not architecture:
             return None
             
@@ -438,14 +531,14 @@ Return the complete updated architecture in JSON format.
         # For now, we return None if no strict heuristic match.
         return None
 
-    async def get_current_architecture(self) -> Optional[C4Architecture]:
+    async def get_current_architecture(self, tenant_id: str = "default_tenant") -> Optional[C4Architecture]:
         """
         Get the current C4 architecture from memory
         
         Returns:
             Current architecture or None
         """
-        return self.storage.load()
+        return self.storage.load(tenant_id=tenant_id)
     
     async def close(self):
         """Clean up resources"""

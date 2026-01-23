@@ -117,6 +117,76 @@ class ADKMCPServer:
                     },
                     "required": ["plantuml_script"]
                 }
+            ),
+            adk_to_mcp_tool(
+                name="query_knowledge_graph",
+                description="Search the Knowledge Graph for architectural concepts, standards, and documentation.",
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Natural language query or keywords"
+                        }
+                    },
+                    "required": ["query"]
+                }
+            ),
+            adk_to_mcp_tool(
+                name="add_coding_standard",
+                description="Add a new coding standard or best practice to the Knowledge Graph.",
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "description": {"type": "string"},
+                        "type": {"type": "string", "enum": ["good_practice", "bad_practice"]},
+                        "category": {"type": "string", "default": "general"}
+                    },
+                    "required": ["description", "type"]
+                }
+            ),
+            adk_to_mcp_tool(
+                name="search_coding_standards",
+                description="Search for coding standards by query or category.",
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string"},
+                        "category": {"type": "string"}
+                    }
+                }
+            ),
+            adk_to_mcp_tool(
+                name="remember_fact",
+                description="Store a useful architectural fact or decision in memory.",
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "fact": {
+                            "type": "string",
+                            "description": "The fact to remember"
+                        },
+                        "category": {
+                            "type": "string",
+                            "description": "Category (e.g. 'auth', 'database', 'decision')",
+                            "default": "general"
+                        }
+                    },
+                    "required": ["fact"]
+                }
+            ),
+            adk_to_mcp_tool(
+                name="recall_facts",
+                description="Retrieve stored facts from memory.",
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "category": {
+                            "type": "string",
+                            "description": "Optional category filter"
+                        }
+                    }
+                }
             )
         ]
     
@@ -165,6 +235,16 @@ class ADKMCPServer:
             return await self._handle_regenerate_c4_architecture(arguments)
         elif name == "update_c4_architecture_with_plantuml":
             return await self._handle_update_c4_architecture(arguments)
+        elif name == "query_knowledge_graph":
+            return await self._handle_query_knowledge_graph(arguments)
+        elif name == "add_coding_standard":
+            return await self._handle_add_coding_standard(arguments)
+        elif name == "search_coding_standards":
+            return await self._handle_search_coding_standards(arguments)
+        elif name == "remember_fact":
+            return await self._handle_remember_fact(arguments)
+        elif name == "recall_facts":
+            return await self._handle_recall_facts(arguments)
         else:
             error_msg = f"Unknown tool: {name}"
             logger.error(error_msg)
@@ -281,6 +361,48 @@ class ADKMCPServer:
         except Exception as e:
             logger.error(f"Failed to update C4 architecture: {e}", exc_info=True)
             raise
+    
+    async def _handle_query_knowledge_graph(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute query_knowledge_graph tool."""
+        query = arguments.get("query")
+        if not query:
+            raise ValueError("query is required")
+            
+        results = await agent.query_knowledge_graph(query)
+        return {"content": [{"type": "text", "text": json.dumps(results, indent=2)}]}
+
+    async def _handle_add_coding_standard(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute add_coding_standard tool."""
+        standard_id = await agent.add_coding_standard(
+            description=arguments.get("description"),
+            type=arguments.get("type"),
+            category=arguments.get("category", "general")
+        )
+        return {"content": [{"type": "text", "text": f"Added standard: {standard_id}"}]}
+
+    async def _handle_search_coding_standards(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute search_coding_standards tool."""
+        results = await agent.search_coding_standards(
+            query=arguments.get("query"),
+            category=arguments.get("category")
+        )
+        return {"content": [{"type": "text", "text": json.dumps(results, indent=2)}]}
+
+    async def _handle_remember_fact(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute remember_fact tool."""
+        fact = arguments.get("fact")
+        category = arguments.get("category", "general")
+        if not fact:
+            raise ValueError("fact is required")
+            
+        result = await agent.remember_fact(fact, category)
+        return {"content": [{"type": "text", "text": result}]}
+
+    async def _handle_recall_facts(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute recall_facts tool."""
+        category = arguments.get("category")
+        results = await agent.recall_facts(category)
+        return {"content": [{"type": "text", "text": json.dumps(results, indent=2)}]}
     
     async def handle_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
         """

@@ -6,12 +6,12 @@ class StorageProvider(ABC):
     """Abstract base class for C4 architecture storage providers."""
 
     @abstractmethod
-    def save(self, architecture: C4Architecture) -> None:
+    def save(self, architecture: C4Architecture, tenant_id: str = "default") -> None:
         """Save C4 architecture to storage."""
         pass
 
     @abstractmethod
-    def load(self) -> Optional[C4Architecture]:
+    def load(self, tenant_id: str = "default") -> Optional[C4Architecture]:
         """Load C4 architecture from storage."""
         pass
 

@@ -12,16 +12,19 @@ class LocalStorage(StorageProvider):
     Stores data in a single JSON file.
     """
     
-    def __init__(self, storage_path: Optional[str] = None):
-        self.storage_path = Path(
-            storage_path or os.getenv("MEMORY_STORE_PATH", "./data/memory.json")
+    def __init__(self, root_dir: Optional[str] = None):
+        self.root_dir = Path(
+            root_dir or os.getenv("STORAGE_ROOT", "data")
         )
-        self.storage_path.parent.mkdir(parents=True, exist_ok=True)
+        self.root_dir.mkdir(parents=True, exist_ok=True)
         
-        if not self.storage_path.exists():
-            self._init_storage()
-    
-    def _init_storage(self):
+    def _get_tenant_path(self, tenant_id: str) -> Path:
+        """Get path to tenant's storage file"""
+        tenant_dir = self.root_dir / tenant_id
+        tenant_dir.mkdir(parents=True, exist_ok=True)
+        return tenant_dir / "c4_architecture.json"
+
+    def _init_storage(self, file_path: Path):
         """Initialize empty storage file."""
         initial_data = {
             "c4_architecture": None,
@@ -31,24 +34,31 @@ class LocalStorage(StorageProvider):
                 "version": "1.0.0"
             }
         }
-        with open(self.storage_path, 'w') as f:
+        with open(file_path, 'w') as f:
             json.dump(initial_data, f, indent=2)
-    
-    def _load_raw(self) -> Dict[str, Any]:
-        """Load raw JSON data."""
-        with open(self.storage_path, 'r') as f:
+
+    def _load_raw(self, tenant_id: str) -> Dict[str, Any]:
+        """Load raw JSON data for tenant."""
+        path = self._get_tenant_path(tenant_id)
+        if not path.exists():
+            self._init_storage(path)
+            
+        with open(path, 'r') as f:
             return json.load(f)
 
-    def save(self, architecture: C4Architecture) -> None:
-        data = self._load_raw()
+    def save(self, architecture: C4Architecture, tenant_id: str = "default") -> None:
+        """Save architecture for specific tenant."""
+        data = self._load_raw(tenant_id)
         data["c4_architecture"] = architecture.model_dump(mode='json')
         data["metadata"]["updated_at"] = datetime.utcnow().isoformat()
         
-        with open(self.storage_path, 'w') as f:
+        path = self._get_tenant_path(tenant_id)
+        with open(path, 'w') as f:
             json.dump(data, f, indent=2)
 
-    def load(self) -> Optional[C4Architecture]:
-        data = self._load_raw()
+    def load(self, tenant_id: str = "default") -> Optional[C4Architecture]:
+        """Load architecture for specific tenant."""
+        data = self._load_raw(tenant_id)
         arch_data = data.get("c4_architecture")
         
         if arch_data is None:
@@ -56,6 +66,6 @@ class LocalStorage(StorageProvider):
         
         return C4Architecture(**arch_data)
 
-    def get_metadata(self) -> Dict[str, Any]:
-        data = self._load_raw()
+    def get_metadata(self, tenant_id: str = "default") -> Dict[str, Any]:
+        data = self._load_raw(tenant_id)
         return data.get("metadata", {})

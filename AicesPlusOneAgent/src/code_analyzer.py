@@ -8,6 +8,7 @@ import os
 import httpx
 from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
+import ssl
 
 load_dotenv()
 
@@ -17,98 +18,88 @@ class CodeAnalyzer:
     
     def __init__(self, base_url: Optional[str] = None):
         """
-        Initialize the code analyzer client
+        Initialize the code analyzer client.
         
         Args:
-            base_url: Base URL for the code analysis API
+            base_url: Base URL for the code analysis API (Default)
         """
-        self.base_url = base_url or os.getenv(
+        self.default_base_url = base_url or os.getenv(
             "CODE_ANALYSIS_API_URL",
             "https://aices-plus-one-analyzer-691085128403.europe-west1.run.app"
         )
-        self.client = httpx.AsyncClient(base_url=self.base_url, timeout=30.0)
-    
-    async def get_repositories(self) -> List[Dict[str, Any]]:
-        """
-        Get all repository configurations
+        # Main client for default operations (or legacy mode)
+        self.client = httpx.AsyncClient(base_url=self.default_base_url, timeout=30.0)
         
-        Returns:
-            List of repository configurations
+        # Cache for tenant-specific clients
+        self.tenant_clients: Dict[str, httpx.AsyncClient] = {}
+
+    async def _get_client(self, tenant_config=None) -> httpx.AsyncClient:
         """
-        response = await self.client.get("/repositories")
-        response.raise_for_status()
-        return response.json()
-    
-    async def get_projects(self) -> List[Dict[str, Any]]:
+        Get an HTTP client configured for a specific tenant or return default.
         """
-        Get all projects with metadata
-        
-        Returns:
-            List of projects with their metadata
-        """
-        response = await self.client.get("/projects")
-        response.raise_for_status()
-        return response.json()
-    
-    async def get_project(self, project_id: str) -> Dict[str, Any]:
-        """
-        Get a specific project's metadata
-        
-        Args:
-            project_id: The project identifier
+        if not tenant_config:
+            return self.client
             
-        Returns:
-            Project metadata
-        """
-        response = await self.client.get(f"/projects/{project_id}")
-        response.raise_for_status()
-        return response.json()
-    
-    async def get_project_entrypoints(self, project_id: str) -> List[Dict[str, Any]]:
-        """
-        Get entry points for a specific project
+        # Create a unique key for caching based on URL and mTLS settings
+        config_key = f"{tenant_config.url}:{tenant_config.use_mtls}:{tenant_config.client_cert_path}"
         
-        Args:
-            project_id: The project identifier
+        if config_key in self.tenant_clients:
+            return self.tenant_clients[config_key]
             
-        Returns:
-            List of entry points for the project
-        """
-        response = await self.client.get(f"/projects/{project_id}/entrypoints")
-        response.raise_for_status()
-        return response.json()
-    
-    async def get_sync_status(self, repo_id: int) -> Optional[Dict[str, Any]]:
-        """
-        Get synchronization status for a repository
+        # Build new client
+        kwargs = {"base_url": tenant_config.url, "timeout": 30.0}
         
-        Args:
-            repo_id: The repository ID
+        if tenant_config.use_mtls and tenant_config.client_cert_path and tenant_config.client_key_path:
+            # Configure SSL Context
+            ssl_context = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
+            if tenant_config.ca_cert_path:
+                ssl_context.load_verify_locations(tenant_config.ca_cert_path)
             
-        Returns:
-            Sync status information or None
-        """
-        response = await self.client.get(f"/repositories/{repo_id}/sync-status")
+            ssl_context.load_cert_chain(
+                certfile=tenant_config.client_cert_path, 
+                keyfile=tenant_config.client_key_path
+            )
+            kwargs["verify"] = ssl_context
+            # Note: httpx 'cert' arg is also an option but 'verify' with context is more robust for custom CA
+            # For simplicity with httpx:
+            # kwargs["cert"] = (tenant_config.client_cert_path, tenant_config.client_key_path)
+            # kwargs["verify"] = tenant_config.ca_cert_path if tenant_config.ca_cert_path else True
+
+        new_client = httpx.AsyncClient(**kwargs)
+        self.tenant_clients[config_key] = new_client
+        return new_client
+
+    async def get_repositories(self, tenant_config=None) -> List[Dict[str, Any]]:
+        """Get all repository configurations"""
+        client = await self._get_client(tenant_config)
+        response = await client.get("/repositories")
         response.raise_for_status()
         return response.json()
     
-    async def sync_repositories(self) -> Dict[str, Any]:
-        """
-        Manually trigger synchronization of all repositories
-        
-        Returns:
-            Sync result
-        """
-        response = await self.client.post("/repositories/sync")
+    async def get_projects(self, tenant_config=None) -> List[Dict[str, Any]]:
+        """Get all projects with metadata"""
+        client = await self._get_client(tenant_config)
+        response = await client.get("/projects")
+        response.raise_for_status()
+        return response.json()
+    
+    async def get_project(self, project_id: str, tenant_config=None) -> Dict[str, Any]:
+        """Get a specific project's metadata"""
+        client = await self._get_client(tenant_config)
+        response = await client.get(f"/projects/{project_id}")
+        response.raise_for_status()
+        return response.json()
+    
+    async def get_project_entrypoints(self, project_id: str, tenant_config=None) -> List[Dict[str, Any]]:
+        """Get entry points for a specific project"""
+        client = await self._get_client(tenant_config)
+        response = await client.get(f"/projects/{project_id}/entrypoints")
         response.raise_for_status()
         return response.json()
     
     async def close(self):
-        """Close the HTTP client"""
+        """Close all HTTP clients"""
         await self.client.aclose()
-    
-    async def __aenter__(self):
-        return self
-    
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.close()
+        for client in self.tenant_clients.values():
+            await client.aclose()
+        self.tenant_clients.clear()
