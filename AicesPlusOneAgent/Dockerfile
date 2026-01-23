@@ -38,7 +38,7 @@ RUN pip install --upgrade pip && \
 
 # Copy application code
 COPY src/ src/
-COPY data/ data/
+RUN mkdir -p data
 COPY *.py ./
 COPY entrypoint.sh .
 
