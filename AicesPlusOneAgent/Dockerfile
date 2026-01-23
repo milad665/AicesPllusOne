@@ -7,7 +7,7 @@ WORKDIR /app/ui
 COPY ui/package.json ui/package-lock.json* ./
 
 # Install dependencies
-RUN npm ci
+RUN npm install
 
 # Copy UI source
 COPY ui/ .
