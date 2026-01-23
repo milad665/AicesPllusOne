@@ -101,7 +101,7 @@ jobs:
           if ! gcloud storage buckets describe gs://${BUCKET_NAME} > /dev/null 2>&1; then
             echo "Creating state bucket gs://${BUCKET_NAME}..."
             gcloud storage buckets create gs://${BUCKET_NAME} --location=${REGION}
-            gcloud storage buckets update gs://${BUCKET_NAME} --versioning-enabled
+            gcloud storage buckets update gs://${BUCKET_NAME} --versioning
           else
             echo "Bucket exists."
           fi
