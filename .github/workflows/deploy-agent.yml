@@ -109,6 +109,10 @@ jobs:
           # 2. Init with partial config
           terraform init -backend-config="bucket=${BUCKET_NAME}"
 
+          # 3. Import Repository if it exists (Fix for 409 conflict)
+          echo "Attempting to import existing repository to state..."
+          terraform import google_artifact_registry_repository.repo projects/${PROJECT_ID}/locations/${REGION}/repositories/aices-repo || echo "Import skipped/failed (likely already in state or not found)"
+
       - name: Terraform Apply
         run: |
           # Sanitize tag again for Terraform variable
