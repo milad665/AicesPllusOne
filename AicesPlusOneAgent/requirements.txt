@@ -29,3 +29,4 @@ fastapi
 python-multipart
 uvicorn
 google-cloud-storage
+networkx
