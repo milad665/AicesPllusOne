@@ -67,9 +67,7 @@ export default function LandingPage() {
                 <div className="mt-20 max-w-6xl mx-auto rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm shadow-2xl overflow-hidden p-2">
                     <div className="aspect-[16/9] bg-gray-900 rounded-lg overflow-hidden relative">
                         <div className="absolute inset-0 flex items-center justify-center text-gray-600">
-                            <img src="/api/placeholder/1200/675" alt="Dashboard Preview" className="opacity-50" />
-                            {/* Placeholder for actual screenshot */}
-                            <span className="absolute">Interactive Architecture Dashboard Preview</span>
+                            <img src="/dashboard-preview.png" alt="Dashboard Preview" className="w-full h-full object-cover" />
                         </div>
                     </div>
                 </div>
@@ -100,11 +98,13 @@ export default function LandingPage() {
                         title="Deep Code Analysis"
                         desc="Supports C#, Java, Python, and more. Auto-detects frameworks like ASP.NET Core, Spring Boot, and FastAPI."
                     />
-                    <FeatureCard
-                        icon={Shield}
-                        title="Zero-Trust Security"
-                        desc="Hybrid deployment model keeps your source code on-premise. Use mTLS for secure agent communication."
-                    />
+                    <div id="security" className="contents">
+                        <FeatureCard
+                            icon={Shield}
+                            title="Zero-Trust Security"
+                            desc="Hybrid deployment model keeps your source code on-premise. Use mTLS for secure agent communication."
+                        />
+                    </div>
                     <FeatureCard
                         icon={Activity}
                         title="Live Observability"
