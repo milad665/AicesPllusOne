@@ -49,8 +49,8 @@ COPY entrypoint.sh .
 COPY --from=ui-builder /app/ui/dist /app/ui/dist
 
 # Expose ports
-# 8001 for FastAPI/UI
-EXPOSE 8001
+# 8080 for FastAPI/UI
+EXPOSE 8080
 
 # Set permissions
 RUN chmod +x entrypoint.sh

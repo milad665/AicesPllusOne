@@ -13,7 +13,8 @@ if [ "$MODE" = "mcp" ]; then
     exec python -m src.server
 elif [ "$MODE" = "api" ]; then
     echo "Starting FastAPI Server..."
-    exec uvicorn src.api:app --host 0.0.0.0 --port 8080
+    echo "Starting FastAPI Server..."
+    exec uvicorn src.api_minimal:app --host 0.0.0.0 --port 8080
 else
     echo "Unknown RUN_MODE: $MODE"
     exit 1
