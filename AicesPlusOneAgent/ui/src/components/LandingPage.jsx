@@ -39,16 +39,20 @@ export default function LandingPage() {
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
                         </span>
-                        v1.0 Enterprise Release Now Available
+                        v1.1 Enterprise Release Now Available
                     </div>
 
-                    <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8 bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent">
-                        Your Codebase, <br />
-                        <span className="text-white">Fully Understood.</span>
+                    <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-8 bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent leading-tight">
+                        Complete C4 Architecture <br />
+                        <span className="text-white">Intelligence System</span>
                     </h1>
 
-                    <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-                        Automatic C4 Architecture diagrams, enterprise-grade security, and deep code analysis for modern engineering teams.
+                    <p className="text-xl text-gray-400 mb-6 max-w-3xl mx-auto leading-relaxed">
+                        An intelligent AI-powered service that automatically generates and provides detailed architectural context from your entire organization's codebase.
+                    </p>
+
+                    <p className="text-lg text-gray-500 mb-10 max-w-2xl mx-auto italic">
+                        "Modern software is a choreographed symphony of services. AI coding agents are flying blind without architectural context. Aices+1 provides that context."
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
