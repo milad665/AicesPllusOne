@@ -18,7 +18,12 @@ class GCSStorage(StorageProvider):
         if not self.bucket_name:
             raise ValueError("GCS_BUCKET_NAME is required for GCSStorage")
             
-        self.client = storage.Client()
+        project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
+        if project_id:
+            self.client = storage.Client(project=project_id)
+        else:
+            self.client = storage.Client()
+            
         self.bucket = self.client.bucket(self.bucket_name)
 
     def _get_blob(self, tenant_id: str):
