@@ -89,7 +89,7 @@ resource "google_cloud_run_v2_service" "agent_service" {
 
       env {
         name  = "STORAGE_TYPE"
-        value = "local"
+        value = "gcs"
       }
       
       env {
@@ -100,6 +100,11 @@ resource "google_cloud_run_v2_service" "agent_service" {
       env {
         name  = "RUN_MODE"
         value = "api"
+      }
+
+      env {
+        name  = "GOOGLE_CLOUD_PROJECT"
+        value = var.project_id
       }
       
       env {
