@@ -5,8 +5,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     _view?: vscode.WebviewView;
     _doc?: vscode.TextDocument;
 
-    // Default to localhost:8001
-    private apiUrl = "http://localhost:8001/api/context/identify";
+    // Default to Production URL
+    private apiUrl = "https://www.studioaices.com/api/architecture/context";
 
     constructor(private readonly _extensionUri: vscode.Uri) { }
 
