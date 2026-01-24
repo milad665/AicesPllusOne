@@ -26,5 +26,6 @@ pytest-asyncio
 
 # API & Storage
 fastapi
+python-multipart
 uvicorn
 google-cloud-storage
