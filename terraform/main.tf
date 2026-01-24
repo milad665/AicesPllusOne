@@ -70,13 +70,6 @@ resource "google_service_account" "agent_sa" {
   display_name = "Aices Plus One Agent Service Account"
 }
 
-# 3.1 Grant Secret Accessor to Agent SA
-resource "google_secret_manager_secret_iam_member" "agent_secret_access" {
-  secret_id = google_secret_manager_secret.api_key.id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_service_account.agent_sa.email}"
-}
-
 # 4. Cloud Run Service (Agent)
 resource "google_cloud_run_v2_service" "agent_service" {
   name     = "aices-plus-one-agent-v2"
