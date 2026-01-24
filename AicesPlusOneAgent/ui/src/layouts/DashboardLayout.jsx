@@ -19,7 +19,7 @@ export default function DashboardLayout() {
             <aside className="w-64 border-r border-gray-800 bg-gray-900 flex flex-col">
                 <div className="h-16 flex items-center px-6 border-b border-gray-800">
                     <span className="text-lg font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-                        Aices Plus One
+                        Aices+1
                     </span>
                 </div>
 
@@ -46,8 +46,8 @@ export default function DashboardLayout() {
                                 key={item.path}
                                 to={item.path}
                                 className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive
-                                        ? 'bg-blue-600/10 text-blue-400'
-                                        : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                                    ? 'bg-blue-600/10 text-blue-400'
+                                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
                                     }`}
                             >
                                 <Icon size={18} />

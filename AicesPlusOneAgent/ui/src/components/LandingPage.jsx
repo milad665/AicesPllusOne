@@ -13,7 +13,7 @@ export default function LandingPage() {
                         <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                             <Layers className="text-white w-5 h-5" />
                         </div>
-                        <span className="text-xl font-bold tracking-tight">Aices Plus One</span>
+                        <span className="text-xl font-bold tracking-tight">Aices+1</span>
                     </div>
                     <div className="flex items-center gap-6">
                         <a href="#features" className="text-sm text-gray-400 hover:text-white transition-colors">Features</a>
@@ -130,7 +130,7 @@ export default function LandingPage() {
 
             {/* Footer */}
             <footer className="py-12 px-6 border-t border-white/10 bg-black text-center text-gray-500 text-sm">
-                <p>&copy; 2026 Aices Plus One. All rights reserved.</p>
+                <p>&copy; 2026 Aices+1. All rights reserved.</p>
             </footer>
         </div>
     );
