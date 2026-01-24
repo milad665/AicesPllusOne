@@ -72,7 +72,7 @@ resource "google_service_account" "agent_sa" {
 
 # 4. Cloud Run Service (Agent)
 resource "google_cloud_run_v2_service" "agent_service" {
-  name     = "aices-plus-one-agent"
+  name     = "aices-plus-one-agent-v2"
   location = var.region
   ingress  = "INGRESS_TRAFFIC_ALL"
   deletion_protection = false
@@ -89,7 +89,7 @@ resource "google_cloud_run_v2_service" "agent_service" {
 
       env {
         name  = "STORAGE_TYPE"
-        value = "gcs"
+        value = "local"
       }
       
       env {
