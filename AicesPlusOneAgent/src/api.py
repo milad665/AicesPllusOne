@@ -33,12 +33,27 @@ agent: Optional[C4ArchitectureAgent] = None
 async def startup_event():
     global agent
     try:
+        print("Attempting to initialize C4ArchitectureAgent...")
         agent = C4ArchitectureAgent()
         print("C4ArchitectureAgent initialized successfully")
     except Exception as e:
-        print(f"Failed to initialize agent: {e}")
-        # We don't raise here to allow the server to start even if agent fails config
-        # Individual endpoints will handle the missing agent
+        print(f"Failed to initialize agent (Safe Mode Active): {e}")
+        # We allow startup to continue so we can debug via /api/debug/init
+
+@app.get("/api/debug/init")
+async def debug_init():
+    """Force initialize agent and return details."""
+    global agent
+    import traceback
+    try:
+        agent = C4ArchitectureAgent()
+        return {"status": "success", "message": "Agent initialized"}
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
 
 @app.get("/health")
 async def health_check():
