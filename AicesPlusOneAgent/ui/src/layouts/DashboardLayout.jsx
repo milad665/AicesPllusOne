@@ -1,10 +1,14 @@
-import React from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { UserButton, OrganizationSwitcher } from "@clerk/clerk-react";
-import { LayoutDashboard, Settings, CreditCard, Shield } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Outlet, Link, useLocation, Navigate } from 'react-router-dom';
+import { UserButton, OrganizationSwitcher, useAuth } from "@clerk/clerk-react";
+import { LayoutDashboard, Settings, CreditCard, Shield, AlertTriangle } from 'lucide-react';
+import axios from 'axios';
 
 export default function DashboardLayout() {
     const location = useLocation();
+    const { getToken, isLoaded } = useAuth();
+    const [subStatus, setSubStatus] = useState(null);
+    const [loadingSub, setLoadingSub] = useState(true);
 
     const navItems = [
         { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
@@ -12,6 +16,45 @@ export default function DashboardLayout() {
         { label: 'Billing', icon: CreditCard, path: '/billing' },
         { label: 'Admin', icon: Shield, path: '/admin' },
     ];
+
+    useEffect(() => {
+        const checkSubscription = async () => {
+            if (!isLoaded) return;
+            try {
+                const token = await getToken();
+                if (!token) {
+                    setLoadingSub(false);
+                    return;
+                }
+
+                // Configure axios for this check specifically or assume global interceptor set elsewhere?
+                // Best to set header explicitly here to be safe/fast or rely on a global setup in App.jsx?
+                // Current App.jsx doesn't set global interceptor. DashboardView does.
+                // Billing does. DashboardLayout should too.
+
+                const res = await axios.get('/api/billing/status', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setSubStatus(res.data.subscription_status);
+            } catch (err) {
+                console.error("Sub check failed", err);
+                // Fallback: don't block optimization if API fails? or block?
+                // Let's assume block if 404/403, but maybe network error allow?
+                // For MVP, safer to fail open or just log.
+                // If 404 (Tenant not found), likely issue.
+            } finally {
+                setLoadingSub(false);
+            }
+        };
+        checkSubscription();
+    }, [isLoaded, getToken, location.pathname]); // Re-check on nav? Maybe overkill, but ensures compliance.
+
+    if (isLoaded && !loadingSub) {
+        // Gating
+        if (subStatus === 'inactive' && location.pathname !== '/billing' && !location.pathname.startsWith('/admin')) {
+            return <Navigate to="/billing" replace />;
+        }
+    }
 
     return (
         <div className="flex h-screen bg-[#F8FAFC] text-slate-900">
@@ -56,6 +99,18 @@ export default function DashboardLayout() {
                         )
                     })}
                 </nav>
+
+                {subStatus === 'trial' && (
+                    <div className="px-4 pb-4">
+                        <div className="bg-orange-50 border border-orange-200 rounded-md p-3 text-xs text-orange-800 flex items-start gap-2">
+                            <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+                            <div>
+                                <span className="font-bold">Trial Active</span>
+                                <br />Upgrade to PAYG to keep access.
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <div className="p-4 border-t border-slate-100 mt-auto">
                     <div className="flex items-center gap-3">

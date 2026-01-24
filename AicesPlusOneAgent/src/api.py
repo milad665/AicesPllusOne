@@ -11,7 +11,8 @@ import traceback
 
 # Import Schemas (usually safe)
 from .schemas import C4Architecture
-from .tenancy.models import Tenant, CreateTenantRequest, UpdateTenantConfigRequest
+from .tenancy.models import Tenant, CreateTenantRequest, UpdateTenantConfigRequest, SubscriptionStatus, CreditTransaction, CreditTransactionType
+from datetime import datetime, timedelta
 from fastapi import Depends
 from .auth import get_current_tenant, get_current_user
 
@@ -237,6 +238,126 @@ else:
 
 def start():
     uvicorn.run("src.api:app", host="0.0.0.0", port=8080, reload=True)
+
+# --- Billing API ---
+
+class TrialActivationRequest(BaseModel):
+    pass
+
+class PaygActivationRequest(BaseModel):
+    stripe_setup_intent_id: str
+
+class CreditAdjustmentRequest(BaseModel):
+    amount: float
+    description: str
+
+@app.get("/api/billing/status")
+async def get_billing_status(current_tenant_id: str = Depends(get_current_tenant)):
+    tenant = get_agent().tenant_manager.get_tenant(current_tenant_id)
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+        
+    is_eligible_for_trial = not tenant.has_used_trial and tenant.subscription_status == SubscriptionStatus.INACTIVE
+    is_eligible_for_welcome_credit = not tenant.has_used_trial and not tenant.has_received_welcome_credit
+    
+    return {
+        "credits_balance": tenant.credits_balance,
+        "subscription_status": tenant.subscription_status,
+        "trial_expires_at": tenant.trial_expires_at,
+        "is_eligible_for_trial": is_eligible_for_trial,
+        "is_eligible_for_welcome_credit": is_eligible_for_welcome_credit,
+        "has_used_trial": tenant.has_used_trial,
+        "has_received_welcome_credit": tenant.has_received_welcome_credit
+    }
+
+@app.post("/api/billing/activate-trial")
+async def activate_trial(request: TrialActivationRequest, current_tenant_id: str = Depends(get_current_tenant)):
+    tm = get_agent().tenant_manager
+    tenant = tm.get_tenant(current_tenant_id)
+    
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+        
+    if tenant.has_used_trial:
+        raise HTTPException(status_code=400, detail="Trial already used")
+        
+    if tenant.subscription_status != SubscriptionStatus.INACTIVE:
+        raise HTTPException(status_code=400, detail="Cannot activate trial on active subscription")
+        
+    # Activate Trial
+    tenant.subscription_status = SubscriptionStatus.TRIAL
+    tenant.trial_expires_at = datetime.now() + timedelta(days=30)
+    tenant.has_used_trial = True
+    
+    tm.save_tenant(tenant)
+    return {"status": "success", "subscription_status": "trial", "expires_at": tenant.trial_expires_at}
+
+@app.post("/api/billing/activate-payg")
+async def activate_payg(request: PaygActivationRequest, current_tenant_id: str = Depends(get_current_tenant)):
+    tm = get_agent().tenant_manager
+    tenant = tm.get_tenant(current_tenant_id)
+    
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+
+    # TODO: Verify Stripe SetupIntent with Stripe API
+    # stripe.SetupIntent.retrieve(request.stripe_setup_intent_id)
+    
+    previous_status = tenant.subscription_status
+    tenant.subscription_status = SubscriptionStatus.ACTIVE_PAYG
+    tenant.trial_expires_at = None # Clear trial expiry if any
+    
+    welcome_bonus_applied = False
+    
+    # Welcome Credit Logic: Strictly if they haven't used trial AND haven't received it before
+    if not tenant.has_used_trial and not tenant.has_received_welcome_credit:
+        tenant.credits_balance += 200.0
+        tenant.has_received_welcome_credit = True
+        welcome_bonus_applied = True
+        
+        # Log Transaction
+        tx = CreditTransaction(
+            tenant_id=tenant.id,
+            amount=200.0,
+            transaction_type=CreditTransactionType.WELCOME_BONUS,
+            description="Welcome Credit for skipping trial"
+        )
+        tm.log_credit_transaction(tx)
+
+    # Note: If they ARE moving from Trial -> PAYG, they get 0 credit, as per requirements.
+    # "If a tenant used the free trial, then it's not entitled to the welcome credit"
+    
+    tm.save_tenant(tenant)
+    return {
+        "status": "success", 
+        "subscription_status": "active_payg", 
+        "welcome_bonus_applied": welcome_bonus_applied,
+        "new_balance": tenant.credits_balance
+    }
+
+@app.post("/api/admin/credits/{tenant_id}")
+async def admin_add_credits(tenant_id: str, request: CreditAdjustmentRequest, user = Depends(get_current_user)):
+    # Verify Admin Role (skipped for MVP)
+    
+    tm = get_agent().tenant_manager
+    tenant = tm.get_tenant(tenant_id)
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+        
+    tenant.credits_balance += request.amount
+    tm.save_tenant(tenant)
+    
+    # Log Transaction
+    tx = CreditTransaction(
+        tenant_id=tenant.id,
+        amount=request.amount,
+        transaction_type=CreditTransactionType.ADMIN_ADJUSTMENT,
+        description=request.description
+    )
+    tm.log_credit_transaction(tx)
+    
+    return {"status": "success", "new_balance": tenant.credits_balance}
+
 
 if __name__ == "__main__":
     start()

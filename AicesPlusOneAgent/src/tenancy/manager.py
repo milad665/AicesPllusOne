@@ -2,15 +2,16 @@ import json
 import os
 from typing import List, Optional, Dict
 import uuid
-from .models import Tenant, SubscriptionTier, AnalyzerConfig, UpdateTenantConfigRequest
+from .models import Tenant, SubscriptionTier, AnalyzerConfig, UpdateTenantConfigRequest, CreditTransaction
 
 class TenantManager:
     """
     Manages tenant creation, retrieval, and persistence.
     """
     
-    def __init__(self, storage_file: str = "data/tenants.json"):
+    def __init__(self, storage_file: str = "data/tenants.json", tx_file: str = "data/transactions.json"):
         self.storage_file = storage_file
+        self.tx_file = tx_file
         # Ensure data dir exists
         os.makedirs(os.path.dirname(self.storage_file), exist_ok=True)
         self._load()
@@ -122,3 +123,18 @@ class TenantManager:
             if token in tenant.service_tokens:
                 return tenant.id
         return None
+
+    def save_tenant(self, tenant: Tenant):
+        """Explicitly save a tenant state."""
+        self.tenants[tenant.id] = tenant
+        self._save()
+
+    def log_credit_transaction(self, tx: CreditTransaction):
+        """Log a credit transaction to disk."""
+        data = tx.model_dump(mode='json')
+        # Append to NDJSON file
+        try:
+            with open(self.tx_file, 'a') as f:
+                f.write(json.dumps(data) + "\n")
+        except Exception as e:
+            print(f"Failed to log transaction: {e}")
