@@ -43,7 +43,7 @@ export default function LandingPage() {
                     </div>
 
                     <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-8 bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent leading-tight">
-                        Complete C4 Architecture <br />
+                        Complete Architecture <br />
                         <span className="text-white">Intelligence System</span>
                     </h1>
 
@@ -126,8 +126,8 @@ export default function LandingPage() {
                     />
                     <FeatureCard
                         icon={Layers}
-                        title="C4 Model Native"
-                        desc="Generates industry-standard C4 diagrams (Context, Container, Component) out of the box."
+                        title="Standard Models"
+                        desc="Generates industry-standard architecture diagrams (Context, Container, Component) out of the box."
                     />
                 </div>
             </section>

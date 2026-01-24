@@ -1,4 +1,4 @@
-# Aices Plus One: Complete C4 Architecture Intelligence System
+# Aices Plus One: Complete Architecture Intelligence System
 
 > An intelligent AI-powered MCP service that automatically generates and provides detailed architectural context from the entire organization's codebase, combining a comprehensive code analysis service with an AI agent.
 
@@ -7,7 +7,7 @@
 This project consists of three main components working together to provide complete architectural intelligence:
 
 1. **🔍 Code Analyzer Service** (`AicesPlusOne/`) - A comprehensive Git repository manager that extracts project metadata using Tree-sitter.
-2. **🤖 C4 Architecture Agent** (`AicesPlusOneAgent/`) - An AI agent powered by **Gemini 2.5** that generates C4 architecture diagrams and exposes data via:
+2. **🤖 Architecture Agent** (`AicesPlusOneAgent/`) - An AI agent powered by **Gemini 2.5** that generates architecture diagrams and exposes data via:
    - **Model Context Protocol (MCP)** for AI tools.
    - **REST API** for the Web UI and VS Code extension.
 3. **🖥️ Visual Interfaces**
@@ -18,8 +18,8 @@ This project consists of three main components working together to provide compl
 
 ## 🎯 What It Does
 
-### C4 Architecture Agent
-This agent analyzes your code repositories and automatically generates comprehensive C4 architecture diagrams at three levels:
+### Architecture Agent
+This agent analyzes your code repositories and automatically generates comprehensive architecture diagrams at three levels:
 1. **Context View** - Shows your system in its environment with users and external systems.
 2. **Container View** - Details the applications, services, and data stores.
 3. **Component View** - Breaks down the internal structure of containers.
@@ -183,6 +183,6 @@ MIT License - See LICENSE file for details.
 ## 🙏 Acknowledgments
 - Built with [Google's Generative AI](https://ai.google.dev/)
 - Uses [Model Context Protocol](https://modelcontextprotocol.io/)
-- Implements [C4 Model](https://c4model.com/) architecture patterns
+- Implements **Architecture** patterns
 - Powered by [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) for code analysis
 - UI powered by **React** & **Vite**

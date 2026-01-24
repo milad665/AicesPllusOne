@@ -259,7 +259,7 @@ For example in the container view, only include services and processes that are 
         "Name": "Uses"
       }
     ],
-    "C4PlantUmlScript": "@startuml\\n!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml\\nPerson(user1, \\"Customer\\", \\"EndUser\\")\\nSystem(sys1, \\"Main System\\", \\"The primary software system\\")\\nRel(user1, sys1, \\"Uses\\")\\n@enduml"
+    "PlantUmlScript": "@startuml\\n!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml\\nPerson(user1, \\"Customer\\", \\"EndUser\\")\\nSystem(sys1, \\"Main System\\", \\"The primary software system\\")\\nRel(user1, sys1, \\"Uses\\")\\n@enduml"
   },
   "ContainerView": {
     "Actors": [],
@@ -277,7 +277,7 @@ For example in the container view, only include services and processes that are 
       }
     ],
     "Relationships": [],
-    "C4PlantUmlScript": "@startuml\\n!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml\\n@enduml"
+    "PlantUmlScript": "@startuml\\n!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml\\n@enduml"
   },
   "ComponentView": {
     "Actors": [],
@@ -294,7 +294,7 @@ For example in the container view, only include services and processes that are 
       }
     ],
     "Relationships": [],
-    "C4PlantUmlScript": "@startuml\\n!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml\\n@enduml"
+    "PlantUmlScript": "@startuml\\n!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml\\n@enduml"
   },
   "ArchitectureExplanation": "This is the system architecture"
 }"""
@@ -302,7 +302,7 @@ For example in the container view, only include services and processes that are 
         # Prepare the prompt
         prompt = f"""{self.system_prompt}
 
-Based on the following code analysis data, generate a complete C4 architecture diagram.
+Based on the following code analysis data, generate a complete architecture diagram.
 
 CODE ANALYSIS DATA:
 {json.dumps(project_details, indent=2)}
@@ -316,7 +316,7 @@ IMPORTANT REQUIREMENTS:
 - PersonType must be one of: "EndUser", "Administrator", "Stakeholder", "ExternalPartner", "SystemDeveloper"
 - ContainerType must be either "Application" or "Datastore"
 - All IDs must be unique strings
-- C4PlantUmlScript must be valid PlantUML syntax
+- PlantUmlScript must be valid PlantUML syntax
 - Return ONLY valid JSON matching the exact structure above. No additional text or markdown.
 """
         
@@ -349,8 +349,10 @@ IMPORTANT REQUIREMENTS:
         try:
             architecture_data = json.loads(response_text)
             
-            # Handle if Gemini wraps response in "C4Architecture" key
-            if "C4Architecture" in architecture_data and isinstance(architecture_data["C4Architecture"], dict):
+            # Handle if Gemini wraps response in "Architecture" key
+            if "Architecture" in architecture_data and isinstance(architecture_data["Architecture"], dict):
+                architecture_data = architecture_data["Architecture"]
+            elif "C4Architecture" in architecture_data and isinstance(architecture_data["C4Architecture"], dict):
                 architecture_data = architecture_data["C4Architecture"]
             
             return C4Architecture(**architecture_data)
@@ -365,13 +367,13 @@ IMPORTANT REQUIREMENTS:
         project_details: List[Dict[str, Any]]
     ) -> C4Architecture:
         """
-        Create a minimal valid C4 architecture from project data
+        Create a minimal valid architecture from project data
         
         Args:
             project_details: List of project information
             
         Returns:
-            Minimal C4 architecture
+            Minimal architecture
         """
         from .schemas import Person, PersonTypes, SoftwareSystem, Container, ContainerTypes, Component, Relationship
         
@@ -390,7 +392,7 @@ IMPORTANT REQUIREMENTS:
                 ) for i, p in enumerate(project_details[:3])
             ],
             Relationships=[],
-            C4PlantUmlScript="@startuml\n!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml\n@enduml"
+            PlantUmlScript="@startuml\n!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml\n@enduml"
         )
         
         # Create basic container view
@@ -410,7 +412,7 @@ IMPORTANT REQUIREMENTS:
                 ) for i, p in enumerate(project_details[:3])
             ],
             Relationships=[],
-            C4PlantUmlScript="@startuml\n!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml\n@enduml"
+            PlantUmlScript="@startuml\n!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml\n@enduml"
         )
         
         # Create basic component view
@@ -418,7 +420,7 @@ IMPORTANT REQUIREMENTS:
             Actors=[],
             Components=[],
             Relationships=[],
-            C4PlantUmlScript="@startuml\n!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml\n@enduml"
+            PlantUmlScript="@startuml\n!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml\n@enduml"
         )
         
         return C4Architecture(
@@ -435,14 +437,14 @@ IMPORTANT REQUIREMENTS:
         tenant_id: str = "default_tenant"
     ) -> C4Architecture:
         """
-        Update C4 architecture from PlantUML script
+        Update architecture from PlantUML script
         
         Args:
             plantuml_script: PlantUML script to parse and update
             view_type: Which view to update ("context", "container", "component", or "all")
             
         Returns:
-            Updated C4 architecture
+            Updated architecture
         """
         # Get current architecture or create new one
         current = self.storage.load(tenant_id=tenant_id)
@@ -450,7 +452,7 @@ IMPORTANT REQUIREMENTS:
         # Use Gemini to parse PlantUML and update architecture
         prompt = f"""{self.system_prompt}
 
-Update the C4 architecture based on the following PlantUML script.
+Update the architecture based on the following PlantUML script.
 
 PLANTUML SCRIPT:
 {plantuml_script}
@@ -460,8 +462,8 @@ VIEW TO UPDATE: {view_type}
 CURRENT ARCHITECTURE:
 {current.model_dump_json(indent=2) if current else "None"}
 
-Parse the PlantUML script and update the appropriate view(s) in the C4 architecture.
-Return the complete updated architecture in JSON format.
+Parse the PlantUML script and update the appropriate view(s) in the architecture.
+Return the complete updated architecture in JSON format using Field: "PlantUmlScript".
 """
         
         # Note: response_mime_type not supported in google-generativeai 0.3.2
@@ -512,7 +514,7 @@ Return the complete updated architecture in JSON format.
                  return {
                      "element": component.model_dump(mode='json'),
                      "view_type": "component",
-                     "uml": architecture.ComponentView.C4PlantUmlScript
+                     "uml": architecture.ComponentView.PlantUmlScript
                  }
                  
         # Strategy 2: Check Containers (Level 2)
@@ -523,7 +525,7 @@ Return the complete updated architecture in JSON format.
                  return {
                      "element": container.model_dump(mode='json'),
                      "view_type": "container",
-                     "uml": architecture.ContainerView.C4PlantUmlScript
+                     "uml": architecture.ContainerView.PlantUmlScript
                  }
 
         # Strategy 3: Default to Container View if file seems to belong to a known project

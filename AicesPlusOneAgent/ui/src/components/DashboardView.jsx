@@ -62,7 +62,7 @@ export default function DashboardView() {
     // Sync script when architecture or active view changes
     useEffect(() => {
         if (architecture && architecture[activeView.key]) {
-            setScript(architecture[activeView.key].C4PlantUmlScript || '');
+            setScript(architecture[activeView.key].PlantUmlScript || '');
             setIsDirty(false);
         } else {
             setScript('');

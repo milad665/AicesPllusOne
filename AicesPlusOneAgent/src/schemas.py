@@ -50,7 +50,7 @@ class ContextView(BaseModel):
     Actors: List[Person] = []
     SoftwareSystems: List[SoftwareSystem] = []
     Relationships: List[Relationship] = []
-    C4PlantUmlScript: str
+    PlantUmlScript: str
 
 
 class Container(BaseModel):
@@ -67,11 +67,11 @@ class Container(BaseModel):
 
 
 class ContainerView(BaseModel):
-    """Container View (C4 Level 2)"""
+    """Container View (Level 2)"""
     Actors: List[Person] = []
     Containers: List[Container] = []
     Relationships: List[Relationship] = []
-    C4PlantUmlScript: str
+    PlantUmlScript: str
 
 
 class Component(BaseModel):
@@ -87,11 +87,11 @@ class Component(BaseModel):
 
 
 class ComponentView(BaseModel):
-    """Component View (C4 Level 3)"""
+    """Component View (Level 3)"""
     Actors: List[Person] = []
     Components: List[Component] = []
     Relationships: List[Relationship] = []
-    C4PlantUmlScript: str
+    PlantUmlScript: str
 
 
 class C4Architecture(BaseModel):
