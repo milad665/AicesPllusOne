@@ -14,7 +14,7 @@ if [ "$MODE" = "mcp" ]; then
 elif [ "$MODE" = "api" ]; then
     echo "Starting FastAPI Server..."
     echo "Starting FastAPI Server..."
-    exec uvicorn src.api_minimal:app --host 0.0.0.0 --port 8080
+    exec uvicorn src.api:app --host 0.0.0.0 --port 8080
 else
     echo "Unknown RUN_MODE: $MODE"
     exit 1
