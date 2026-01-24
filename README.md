@@ -82,14 +82,14 @@ See architectural context directly in your editor.
 
 | Language   | Entry Points | Dependencies | Project Type Detection | Frameworks Detected |
 |------------|--------------|--------------|----------------------|-------------------|
-| Python     | ✅ Functions, Classes | ✅ requirements.txt, setup.py | ✅ | FastAPI, Flask, Django |
-| JavaScript | ✅ Functions, Classes | ✅ package.json | ✅ | Express, React, Vue |
-| TypeScript | ✅ Functions, Classes | ✅ package.json | ✅ | Angular, Next.js |
-| Java       | ✅ Methods, Classes | ✅ pom.xml, build.gradle | ✅ | Spring Boot, Maven |
-| C++        | ⏳ Coming Soon | ⏳ CMakeLists.txt | ✅ | |
-| Go         | ⏳ Coming Soon | ✅ go.mod | ✅ | Gin, Echo |
-| Rust       | ⏳ Coming Soon | ✅ Cargo.toml | ✅ | Actix, Rocket |
-| C#         | ⏳ Coming Soon | ✅ .csproj | ✅ | ASP.NET Core |
+| Python     | ✅ Functions, Classes, APIs | ✅ requirements.txt, pyproject.toml | ✅ API, CLI, Library | FastAPI, Flask, Django |
+| JavaScript | ✅ Functions, Classes | ✅ package.json | ✅ Web, API | Express, React, Vue, Node |
+| TypeScript | ✅ Functions, Classes | ✅ package.json | ✅ Web, API | Angular, Next.js, NestJS |
+| C# (.NET)  | ✅ Methods, APIs, MVC Actions | ✅ .csproj, packages.config | ✅ API, MVC, Blazor, Desktop, Mobile | ASP.NET Core, MVC, Razor, WPF, WinForms, Maui |
+| Java       | ✅ Methods, Classes | ✅ pom.xml | ✅ Library, API | Spring Boot, Maven |
+| Go         | ✅ Main, Public Funcs| ✅ go.mod | ✅ CLI, API | Standard Lib, Gin, Echo |
+| Rust       | ⏳ Coming Soon | ✅ Cargo.toml | ✅ CLI, Library | Actix, Rocket |
+| C++        | ⏳ Coming Soon | ⏳ CMakeLists.txt | ✅ CLI | |
 
 ## 🛠️ MCP Tools
 
