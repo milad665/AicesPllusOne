@@ -7,7 +7,7 @@ WORKDIR /app/ui
 COPY ui/package.json ui/package-lock.json* ./
 
 # Install dependencies
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Copy UI source
 COPY ui/ .
