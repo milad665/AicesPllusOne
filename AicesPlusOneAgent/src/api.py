@@ -27,8 +27,12 @@ app.add_middleware(
 # Global agent instance
 agent: Any = None
 
-@app.on_event("startup")
-async def startup_event():
+# startup_event REMOVED to prevent boot-time hangs/crashes.
+# Agent is initialized lazily or via /api/debug/init
+
+@app.get("/api/debug/init")
+async def debug_init():
+    """Force initialize agent and return details."""
     global agent
     try:
         print("Lazy importing C4ArchitectureAgent...")
@@ -36,21 +40,10 @@ async def startup_event():
         
         print("Initializing C4ArchitectureAgent...")
         agent = C4ArchitectureAgent()
-        print("C4ArchitectureAgent initialized successfully")
-    except Exception as e:
-        print(f"Failed to initialize agent (Main Startup): {e}")
-        traceback.print_exc()
-
-@app.get("/api/debug/init")
-async def debug_init():
-    """Force initialize agent and return details."""
-    global agent
-    try:
-        # Re-import to catch import errors
-        from .agent import C4ArchitectureAgent
-        agent = C4ArchitectureAgent()
         return {"status": "success", "message": "Agent initialized"}
     except Exception as e:
+        print(f"Agent Init Failed: {e}")
+        traceback.print_exc()
         return {
             "status": "error",
             "error": str(e),
