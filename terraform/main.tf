@@ -116,6 +116,16 @@ resource "google_cloud_run_v2_service" "agent_service" {
           }
         }
       }
+
+      env {
+        name  = "CLERK_ISSUER"
+        value = var.clerk_issuer
+      }
+      
+      env {
+        name  = "CLERK_JWKS_URL"
+        value = var.clerk_jwks_url
+      }
       
       # Health Check Probe
       startup_probe {

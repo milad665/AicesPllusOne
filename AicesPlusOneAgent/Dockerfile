@@ -12,6 +12,10 @@ RUN npm install
 # Copy UI source
 COPY ui/ .
 
+# Build args
+ARG VITE_CLERK_PUBLISHABLE_KEY
+ENV VITE_CLERK_PUBLISHABLE_KEY=$VITE_CLERK_PUBLISHABLE_KEY
+
 # Build for production
 RUN npm run build
 

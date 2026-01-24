@@ -1,6 +1,7 @@
 import json
 import os
 from typing import List, Optional, Dict
+import uuid
 from .models import Tenant, SubscriptionTier, AnalyzerConfig, UpdateTenantConfigRequest
 
 class TenantManager:
@@ -89,3 +90,35 @@ class TenantManager:
             
         self._save()
         return tenant
+
+    def create_service_token(self, tenant_id: str, description: str = "MCP Token") -> Optional[str]:
+        """Generate a new service token for the tenant."""
+        tenant = self.get_tenant(tenant_id)
+        if not tenant:
+            return None
+        
+        # Simple UUID token for now. In prod, use crypto secure random or JWT.
+        token = f"st_{uuid.uuid4().hex}"
+        tenant.service_tokens[token] = description
+        self._save()
+        return token
+
+    def revoke_service_token(self, tenant_id: str, token: str) -> bool:
+        """Revoke a service token."""
+        tenant = self.get_tenant(tenant_id)
+        if not tenant:
+            return False
+            
+        if token in tenant.service_tokens:
+            del tenant.service_tokens[token]
+            self._save()
+            return True
+        return False
+        
+    def validate_service_token(self, token: str) -> Optional[str]:
+        """Validate a token and return the tenant_id if valid."""
+        # Simple linear scan. For high scale, use a reverse index or database.
+        for tenant in self.tenants.values():
+            if token in tenant.service_tokens:
+                return tenant.id
+        return None

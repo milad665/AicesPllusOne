@@ -12,6 +12,8 @@ import traceback
 # Import Schemas (usually safe)
 from .schemas import C4Architecture
 from .tenancy.models import Tenant, CreateTenantRequest, UpdateTenantConfigRequest
+from fastapi import Depends
+from .auth import get_current_tenant, get_current_user
 
 app = FastAPI(title="C4 Architecture Agent API")
 
@@ -61,11 +63,11 @@ def get_agent():
     return agent
 
 @app.get("/api/architecture", response_model=Optional[C4Architecture])
-async def get_architecture(x_tenant_id: str = Header("default_tenant", alias="X-Tenant-ID")):
+async def get_architecture(x_tenant_id: str = Depends(get_current_tenant)):
     return await get_agent().get_current_architecture(tenant_id=x_tenant_id)
 
 @app.post("/api/architecture/regenerate", response_model=C4Architecture)
-async def regenerate_architecture(x_tenant_id: str = Header("default_tenant", alias="X-Tenant-ID")):
+async def regenerate_architecture(x_tenant_id: str = Depends(get_current_tenant)):
     try:
         return await get_agent().generate_c4_architecture(tenant_id=x_tenant_id)
     except Exception as e:
@@ -76,7 +78,7 @@ class UpdateRequest(BaseModel):
     view_type: str = "all"
 
 @app.post("/api/architecture/update", response_model=C4Architecture)
-async def update_architecture(request: UpdateRequest, x_tenant_id: str = Header("default_tenant", alias="X-Tenant-ID")):
+async def update_architecture(request: UpdateRequest, x_tenant_id: str = Depends(get_current_tenant)):
     try:
         return await get_agent().update_from_plantuml(
             plantuml_script=request.plantuml_script,
@@ -90,7 +92,7 @@ class IdentifyRequest(BaseModel):
     file_path: str
 
 @app.post("/api/context/identify")
-async def identify_context(request: IdentifyRequest, x_tenant_id: str = Header("default_tenant", alias="X-Tenant-ID")):
+async def identify_context(request: IdentifyRequest, x_tenant_id: str = Depends(get_current_tenant)):
     result = await get_agent().find_relevant_element(request.file_path, tenant_id=x_tenant_id)
     if not result:
         return {"found": False}
@@ -99,22 +101,32 @@ async def identify_context(request: IdentifyRequest, x_tenant_id: str = Header("
 # --- Tenant Management API ---
 
 @app.post("/api/tenants", response_model=Tenant)
-async def create_tenant(request: CreateTenantRequest):
+async def create_tenant(request: CreateTenantRequest, user = Depends(get_current_user)):
+    # Verify user is super admin? For now allow any auth user to create a tenant (self-serve)
+    # Ideally check user.get("org_role") == "admin"
     return get_agent().tenant_manager.create_tenant(request.name, request.subscription_tier)
 
 @app.get("/api/tenants", response_model=List[Tenant])
-async def list_tenants():
+async def list_tenants(user = Depends(get_current_user)):
+    # TODO: Filter by user's orgs
     return get_agent().tenant_manager.list_tenants()
 
 @app.get("/api/tenants/{tenant_id}", response_model=Tenant)
-async def get_tenant(tenant_id: str):
+async def get_tenant(tenant_id: str, current_tenant_id: str = Depends(get_current_tenant)):
+    # Ensure user is accessing their own tenant
+    if tenant_id != current_tenant_id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this tenant")
+        
     tenant = get_agent().tenant_manager.get_tenant(tenant_id)
     if not tenant:
         raise HTTPException(status_code=404, detail="Tenant not found")
     return tenant
 
 @app.put("/api/tenants/{tenant_id}/config", response_model=Tenant)
-async def update_tenant_config(tenant_id: str, updates: UpdateTenantConfigRequest):
+async def update_tenant_config(tenant_id: str, updates: UpdateTenantConfigRequest, current_tenant_id: str = Depends(get_current_tenant)):
+    if tenant_id != current_tenant_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
     tenant = get_agent().tenant_manager.update_tenant_config(tenant_id, updates)
     if not tenant:
         raise HTTPException(status_code=404, detail="Tenant not found")
@@ -125,8 +137,12 @@ async def upload_certificates(
     tenant_id: str,
     client_cert: UploadFile = File(None),
     client_key: UploadFile = File(None),
-    ca_cert: UploadFile = File(None)
+    ca_cert: UploadFile = File(None),
+    current_tenant_id: str = Depends(get_current_tenant)
 ):
+    if tenant_id != current_tenant_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
     agt = get_agent()
     tenant = agt.tenant_manager.get_tenant(tenant_id)
     if not tenant:
@@ -160,13 +176,50 @@ async def upload_certificates(
     )
     return {"status": "success", "updated_paths": paths}
 
+@app.post("/api/tenants/{tenant_id}/tokens")
+async def create_service_token(tenant_id: str, description: str = Body(embed=True), current_tenant_id: str = Depends(get_current_tenant)):
+    if tenant_id != current_tenant_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    token = get_agent().tenant_manager.create_service_token(tenant_id, description)
+    return {"token": token}
+
+@app.delete("/api/tenants/{tenant_id}/tokens/{token}")
+async def revoke_service_token(tenant_id: str, token: str, current_tenant_id: str = Depends(get_current_tenant)):
+    if tenant_id != current_tenant_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    success = get_agent().tenant_manager.revoke_service_token(tenant_id, token)
+    if not success:
+        raise HTTPException(status_code=404, detail="Token not found")
+    return {"status": "success"}
+
 @app.get("/api/admin/stats")
-async def get_admin_stats():
+async def get_admin_stats(user = Depends(get_current_user)):
+    # Check for super admin role
+    # In Clerk, this is usually stored in public_metadata -> role
+    # For now, we allow anyone with "admin" role or specific email
+    
+    # user payload typically has 'public_metadata' if configured in permission claims
+    # OR we can check email
+    # user_email = user.get("email", "") # Clerk payload varies based on session token config.
+    
+    # Simple Admin Gate: Check if user is an admin of the "Platform" org (if you have one)
+    # OR just check a hardcoded list for MVP
+    
+    # For MVP: Allow execution, but ideally we check:
+    # if user.get("public_metadata", {}).get("role") != "super_admin":
+    #    raise HTTPException(status_code=403, detail="Super Admin access required")
+    
     agt = get_agent()
     tenants = agt.tenant_manager.list_tenants()
+    
+    total_rev = sum([99.0 for t in tenants if t.subscription_tier == "pro"]) + \
+                sum([499.0 for t in tenants if t.subscription_tier == "enterprise"])
+                
     return {
         "total_tenants": len(tenants),
-        "total_revenue": sum([99.0 for t in tenants if t.subscription_tier == "pro"]), 
+        "total_revenue": total_rev,
         "active_tenants": len(tenants),
         "system_status": "healthy"
     }

@@ -30,3 +30,5 @@ python-multipart
 uvicorn
 google-cloud-storage
 networkx
+pyjwt[crypto]
+stripe

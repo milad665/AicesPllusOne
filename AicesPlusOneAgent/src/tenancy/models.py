@@ -27,6 +27,9 @@ class Tenant(BaseModel):
     
     # New Field: Analyzer Configuration
     analyzer_config: AnalyzerConfig = Field(default_factory=AnalyzerConfig)
+
+    # Service Tokens: {token: "description"}
+    service_tokens: Dict[str, str] = Field(default_factory=dict)
     
 class CreateTenantRequest(BaseModel):
     name: str

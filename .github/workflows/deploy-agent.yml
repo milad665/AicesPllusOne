@@ -71,7 +71,9 @@ jobs:
           IMAGE_NAME="${REGION}-docker.pkg.dev/${PROJECT_ID}/aices-repo/agent:${IMAGE_TAG}"
           echo "Building image: $IMAGE_NAME"
 
-          docker build -t $IMAGE_NAME .
+          docker build \
+            --build-arg VITE_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY }} \
+            -t $IMAGE_NAME .
           docker push $IMAGE_NAME
 
   deploy:
@@ -80,6 +82,10 @@ jobs:
     defaults:
       run:
         working-directory: ./terraform
+    env:
+      # Inject Terraform Variables from Secrets
+      TF_VAR_clerk_issuer: ${{ secrets.CLERK_ISSUER }}
+      TF_VAR_clerk_jwks_url: ${{ secrets.CLERK_JWKS_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

@@ -14,3 +14,13 @@ variable "agent_image" {
   type        = string
   default     = "gcr.io/myp-project/aices-plus-one-agent:latest" 
 }
+
+variable "clerk_issuer" {
+  description = "The Clerk Issuer URL"
+  type        = string
+}
+
+variable "clerk_jwks_url" {
+  description = "The Clerk JWKS URL"
+  type        = string
+}
