@@ -183,7 +183,7 @@ else:
     print(f"UI build directory not found at {ui_dist_path}. Running in API-only mode.")
 
 def start():
-    uvicorn.run("src.api:app", host="0.0.0.0", port=8001, reload=True)
+    uvicorn.run("src.api:app", host="0.0.0.0", port=8080, reload=True)
 
 if __name__ == "__main__":
     start()

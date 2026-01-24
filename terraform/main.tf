@@ -84,7 +84,7 @@ resource "google_cloud_run_v2_service" "agent_service" {
       image = var.agent_image
       
       ports {
-        container_port = 8001
+        container_port = 8080
       }
 
       env {
@@ -117,10 +117,22 @@ resource "google_cloud_run_v2_service" "agent_service" {
         }
       }
       
+      # Health Check Probe
+      startup_probe {
+        initial_delay_seconds = 5
+        timeout_seconds = 5
+        period_seconds = 10
+        failure_threshold = 5
+        http_get {
+          path = "/health"
+          port = 8080
+        }
+      }
+
       resources {
         limits = {
           cpu    = "1000m"
-          memory = "1Gi"
+          memory = "2Gi"
         }
       }
     }
