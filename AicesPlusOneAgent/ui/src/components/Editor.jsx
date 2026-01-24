@@ -9,7 +9,7 @@ const CodeEditor = ({ value, onChange, language = 'plantuml' }) => {
                 defaultLanguage={language}
                 value={value}
                 onChange={onChange}
-                theme="vs-dark"
+                theme="light"
                 options={{
                     minimap: { enabled: false },
                     fontSize: 14,
