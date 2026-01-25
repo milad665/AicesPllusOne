@@ -3,6 +3,8 @@ from fastapi.responses import JSONResponse
 from typing import List, Dict, Optional
 import asyncio
 import logging
+import json
+import os
 from pathlib import Path
 from datetime import datetime
 
@@ -39,6 +41,67 @@ async def startup_event():
     """Initialize the application"""
     await db_manager.initialize()
     await scheduler.start()
+    
+    # Load Repositories from Environment Variables if provided
+    try:
+        env_repos = json.loads(Config.GIT_REPOSITORIES)
+        if env_repos:
+            logger.info(f"Found {len(env_repos)} repositories in environment variables")
+            
+            # Resolve Global SSH Key
+            global_private_key = Config.GIT_SSH_KEY
+            if not global_private_key and Config.GIT_SSH_KEY_PATH and os.path.exists(Config.GIT_SSH_KEY_PATH):
+                with open(Config.GIT_SSH_KEY_PATH, 'r') as f:
+                    global_private_key = f.read()
+            
+            global_public_key = Config.GIT_SSH_PUBLIC_KEY
+            
+            # Upsert Repositories
+            existing_repos = await db_manager.get_repositories()
+            existing_names = {r.name for r in existing_repos}
+            
+            for repo_data in env_repos:
+                name = repo_data.get("name")
+                url = repo_data.get("url")
+                
+                if not name or not url:
+                    logger.warning(f"Skipping invalid repo config: {repo_data}")
+                    continue
+                    
+                if name in existing_names:
+                    logger.info(f"Repository {name} already exists in DB, skipping.")
+                    continue
+                
+                # Determine SSH Key (Per-repo overrides or Global)
+                # Assuming JSON might have 'ssh_key' field, else global
+                private_key = repo_data.get("ssh_private_key", global_private_key)
+                public_key = repo_data.get("ssh_public_key", global_public_key)
+                
+                if not private_key:
+                    logger.warning(f"No SSH key found for {name} (global or local), using empty string (might fail if auth needed)")
+                    private_key = ""
+                    public_key = ""
+
+                new_repo = RepositoryConfig(
+                    name=name,
+                    url=url,
+                    ssh_private_key=private_key,
+                    ssh_public_key=public_key,
+                    default_branch=repo_data.get("default_branch", "main")
+                )
+                
+                await db_manager.add_repository(new_repo)
+                logger.info(f"Added repository {name} from environment")
+                
+            # Trigger initial Sync
+            asyncio.create_task(git_manager.sync_all_repositories())
+            asyncio.create_task(analyze_repositories())
+            
+    except json.JSONDecodeError:
+        logger.error("Failed to parse GIT_REPOSITORIES environment variable. Must be valid JSON.")
+    except Exception as e:
+        logger.error(f"Error loading environment repositories: {e}")
+
     logger.info("Application started successfully")
 
 

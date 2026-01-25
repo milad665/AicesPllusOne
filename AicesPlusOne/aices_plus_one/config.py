@@ -1,4 +1,5 @@
 import os
+import json
 from pathlib import Path
 
 
@@ -20,6 +21,12 @@ class Config:
     
     # Security settings
     SSH_KEYS_DIR = os.getenv("SSH_KEYS_DIR", "/tmp/git_ssh_keys")
+    
+    # Environment Configuration (for stateless startup)
+    GIT_REPOSITORIES = os.getenv("GIT_REPOSITORIES", "[]") # JSON string: [{"name": "foo", "url": "..."}]
+    GIT_SSH_KEY = os.getenv("GIT_SSH_KEY", "")
+    GIT_SSH_KEY_PATH = os.getenv("GIT_SSH_KEY_PATH", "")
+    GIT_SSH_PUBLIC_KEY = os.getenv("GIT_SSH_PUBLIC_KEY", "") # Optional public key
     
     # Analysis settings
     CACHE_REFRESH_HOURS = int(os.getenv("CACHE_REFRESH_HOURS", "1"))
