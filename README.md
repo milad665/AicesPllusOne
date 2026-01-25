@@ -1,6 +1,6 @@
 # Aices Plus One: Complete Architecture Intelligence System
 
-> An intelligent AI-powered MCP service that automatically generates and provides detailed architectural context from the entire organization's codebase, combining a comprehensive code analysis service with an AI agent.
+> An intelligent AI-powered MCP service that automatically generates and provides detailed architectural context for **Coding AI Agents**, enabling them to understand the "choreographed symphony of services" they are modifying.
 
 ## 🏗️ System Overview
 

@@ -8,8 +8,8 @@ export default function LandingPage() {
         <div className="min-h-screen bg-[#F8FAFC] text-slate-900 selection:bg-sky-200">
 
             <Helmet>
-                <title>Aices+1 - Intelligent Architecture Context</title>
-                <meta name="description" content="Automated architecture diagrams and deep code analysis for enterprise engineering teams. A synchronized symphony of services." />
+                <title>Aices+1 - Intelligent Architecture Context for Coding AI Agents</title>
+                <meta name="description" content="Automated architecture diagrams and deep code analysis. Aices+1 provides the missing architectural context that Coding AI Agents need to operate effectively." />
                 <link rel="canonical" href="https://www.studioaices.com" />
             </Helmet>
 
@@ -50,12 +50,12 @@ export default function LandingPage() {
                     </div>
 
                     <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8 text-slate-900 leading-tight">
-                        Complete Architecture <br />
-                        <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">Intelligence System</span>
+                        Complete Architecture Context <br />
+                        <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">for Coding AI Agents</span>
                     </h1>
 
                     <p className="text-xl text-slate-600 mb-6 max-w-3xl mx-auto leading-relaxed">
-                        An intelligent AI-powered service that automatically generates and provides detailed architectural context from your entire organization's codebase.
+                        An intelligent AI-powered service that automatically generates and provides detailed architectural context to empower your Coding AI Agents.
                     </p>
 
                     <p className="text-lg text-slate-500 mb-10 max-w-2xl mx-auto italic font-medium">
