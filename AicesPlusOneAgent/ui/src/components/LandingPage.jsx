@@ -24,7 +24,6 @@ export default function LandingPage() {
                     </div>
                     <div className="flex items-center gap-6">
                         <a href="#features" className="text-sm font-medium text-slate-600 hover:text-sky-600 transition-colors">Features</a>
-                        <a href="#security" className="text-sm font-medium text-slate-600 hover:text-sky-600 transition-colors">Security</a>
                         <SignInButton mode="modal">
                             <button className="px-5 py-2 bg-slate-900 text-white text-sm font-semibold rounded-full hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/10">
                                 Sign In
@@ -87,9 +86,9 @@ export default function LandingPage() {
             {/* Stats/Logos */}
             <section className="py-12 border-y border-slate-200 bg-white">
                 <div className="max-w-7xl mx-auto px-6">
-                    <p className="text-center text-xs font-semibold tracking-wider text-slate-400 mb-8 uppercase">Trusted by engineering teams working with</p>
+                    <p className="text-center text-xs font-semibold tracking-wider text-slate-400 mb-8 uppercase">SUPPORTS CODEBASES IN FOLLOWING LANGUAGES</p>
                     <div className="flex flex-wrap justify-center gap-8 md:gap-16 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-                        {['Python', 'TypeScript', 'C# .NET', 'Java', 'Go', 'Rust'].map(lang => (
+                        {['Python', 'TypeScript', 'C#', 'Java', 'Go', 'Rust'].map(lang => (
                             <span key={lang} className="text-xl font-bold text-slate-800">{lang}</span>
                         ))}
                     </div>
@@ -103,33 +102,21 @@ export default function LandingPage() {
                     <p className="text-slate-500 max-w-2xl mx-auto">Built for scale, security, and complex dependency graphs. Aether Grid design ensures clarity in complex systems.</p>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-8">
+                <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                     <FeatureCard
                         icon={Code}
                         title="Deep Code Analysis"
                         desc="Supports C#, Java, Python, and more. Auto-detects frameworks like ASP.NET Core, Spring Boot, and FastAPI."
                     />
-                    <div id="security" className="contents">
-                        <FeatureCard
-                            icon={Shield}
-                            title="Zero-Trust Security"
-                            desc="Hybrid deployment model keeps your source code on-premise. Use mTLS for secure agent communication."
-                        />
-                    </div>
                     <FeatureCard
-                        icon={Activity}
-                        title="Live Observability"
-                        desc="Real-time syncing with your repositories. Detect architectural drift before it hits production."
-                    />
-                    <FeatureCard
-                        icon={Globe}
-                        title="Multi-Tenancy"
-                        desc="Strict data isolation per tenant. Ideal for large organizations with multiple independent teams."
+                        icon={Shield}
+                        title="Zero-Trust Security"
+                        desc="Hybrid deployment model keeps your source code on-premise. Use mTLS for secure agent communication."
                     />
                     <FeatureCard
                         icon={Zap}
                         title="AI-Powered Context"
-                        desc="Gemini 2.5 integration creates meaningful summaries and architectural insights automatically."
+                        desc="Advanced AI integration creates meaningful summaries and architectural insights automatically."
                     />
                     <FeatureCard
                         icon={Layers}
