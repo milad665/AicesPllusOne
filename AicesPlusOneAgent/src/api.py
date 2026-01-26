@@ -3,6 +3,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Body, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
 from fastapi import Header
@@ -241,7 +242,26 @@ if not os.path.exists(ui_dist_path):
 
 if os.path.exists(ui_dist_path):
     print(f"Serving static UI from {ui_dist_path}")
-    app.mount("/", StaticFiles(directory=ui_dist_path, html=True), name="ui")
+    
+    # 1. Mount assets (Vite convention: /assets)
+    assets_path = os.path.join(ui_dist_path, "assets")
+    if os.path.exists(assets_path):
+        app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
+
+    # 2. SPA Fallback / Serve Root Files
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        # API 404 Fallback (Don't serve HTML for API typos)
+        if full_path.startswith("api/"):
+            return JSONResponse({"detail": "Not Found"}, status_code=404)
+            
+        # Check if direct file exists in dist (e.g. favicon.svg, robots.txt)
+        file_path = os.path.join(ui_dist_path, full_path)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+            
+        # Otherwise serve index.html (SPA Routing)
+        return FileResponse(os.path.join(ui_dist_path, "index.html"))
 else:
     print(f"UI build directory not found at {ui_dist_path}. Running in API-only mode.")
 
