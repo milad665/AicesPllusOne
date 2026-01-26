@@ -117,8 +117,13 @@ async def get_current_tenant(request: Request) -> str:
         if org_id:
             return org_id
             
-        # If no org selected, user is in "personal" mode or we force org selection.
-        # For Enterprise SaaS, force org selection.
+        # Fallback to Personal Account (User ID)
+        # This aligns with Settings.jsx logic (organization?.id || user?.id)
+        user_id = payload.get("sub")
+        if user_id:
+            return user_id
+            
+        # Only raise if even user_id is missing (shouldnt happen for valid token)
         raise HTTPException(status_code=403, detail="Organization context required. Select an org.")
     except HTTPException as he:
         raise he
