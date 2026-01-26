@@ -25,6 +25,17 @@ class AnalyzerConfig(BaseModel):
     ca_cert_path: Optional[str] = Field(default=None, description="Path to CA certificate (.crt)")
     whitelisted_ips: List[str] = Field(default_factory=list, description="List of IPs tenant needs to whitelist")
 
+class ServiceStatus(str, Enum):
+    ACTIVE = "active"
+    CANCELED = "canceled"
+    INACTIVE = "inactive"
+
+class TenantService(BaseModel):
+    name: str 
+    status: ServiceStatus = ServiceStatus.INACTIVE
+    active_until: Optional[datetime] = None
+    last_billed: Optional[datetime] = None
+
 class Tenant(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
@@ -38,6 +49,10 @@ class Tenant(BaseModel):
     trial_expires_at: Optional[datetime] = Field(default=None, description="Expiration date of free trial")
     stripe_customer_id: Optional[str] = Field(default=None, description="Stripe Customer ID")
     active_subscription_id: Optional[str] = Field(default=None, description="Active Stripe Subscription ID")
+
+    # Service-Based Billing
+    seat_count: int = Field(default=1, description="Number of billable users")
+    services: Dict[str, TenantService] = Field(default_factory=dict, description="Active Services")
 
     created_at: datetime = Field(default_factory=datetime.now)
     config: Dict[str, Any] = Field(default_factory=dict)

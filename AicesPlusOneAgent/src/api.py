@@ -11,7 +11,7 @@ import traceback
 
 # Import Schemas (usually safe)
 from .schemas import C4Architecture
-from .tenancy.models import Tenant, CreateTenantRequest, UpdateTenantConfigRequest, SubscriptionStatus, CreditTransaction, CreditTransactionType
+from .tenancy.models import Tenant, CreateTenantRequest, UpdateTenantConfigRequest, SubscriptionStatus, CreditTransaction, CreditTransactionType, TenantService, ServiceStatus
 from datetime import datetime, timedelta
 from fastapi import Depends
 from .auth import get_current_tenant, get_current_user
@@ -65,6 +65,15 @@ def get_agent():
 
 @app.get("/api/architecture", response_model=Optional[C4Architecture])
 async def get_architecture(x_tenant_id: str = Depends(get_current_tenant)):
+    # Gating Check
+    tenant = get_agent().tenant_manager.get_tenant(x_tenant_id)
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+        
+    from .agent.gating import FeatureGate
+    if not FeatureGate.check_access(tenant, "architecture_overview"):
+         raise HTTPException(status_code=403, detail="Service 'architecture_overview' required.")
+
     return await get_agent().get_current_architecture(tenant_id=x_tenant_id)
 
 @app.post("/api/architecture/regenerate", response_model=C4Architecture)
@@ -267,7 +276,9 @@ async def get_billing_status(current_tenant_id: str = Depends(get_current_tenant
         "is_eligible_for_trial": is_eligible_for_trial,
         "is_eligible_for_welcome_credit": is_eligible_for_welcome_credit,
         "has_used_trial": tenant.has_used_trial,
-        "has_received_welcome_credit": tenant.has_received_welcome_credit
+        "has_received_welcome_credit": tenant.has_received_welcome_credit,
+        "seat_count": tenant.seat_count,
+        "services": tenant.services
     }
 
 @app.post("/api/billing/activate-trial")
@@ -357,6 +368,91 @@ async def admin_add_credits(tenant_id: str, request: CreditAdjustmentRequest, us
     tm.log_credit_transaction(tx)
     
     return {"status": "success", "new_balance": tenant.credits_balance}
+
+class SeatUpdateRequest(BaseModel):
+    seat_count: int
+
+@app.post("/api/billing/seats")
+async def update_seat_count(request: SeatUpdateRequest, current_tenant_id: str = Depends(get_current_tenant)):
+    if request.seat_count < 1:
+        raise HTTPException(status_code=400, detail="Seat count must be at least 1")
+        
+    tm = get_agent().tenant_manager
+    tenant = tm.get_tenant(current_tenant_id)
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+        
+    tenant.seat_count = request.seat_count
+    tm.save_tenant(tenant)
+    return {"status": "success", "seat_count": tenant.seat_count}
+
+@app.post("/api/billing/services/{service_id}/activate")
+async def activate_service(service_id: str, current_tenant_id: str = Depends(get_current_tenant)):
+    SERVICE_PRICES = {
+        "architecture_overview": 20.0,
+        "documentation": 5.0
+    }
+    
+    if service_id not in SERVICE_PRICES:
+        raise HTTPException(status_code=400, detail="Invalid service ID")
+        
+    tm = get_agent().tenant_manager
+    tenant = tm.get_tenant(current_tenant_id)
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+        
+    # Check if already active
+    if service_id in tenant.services and tenant.services[service_id].status == ServiceStatus.ACTIVE:
+        return {"status": "already_active"}
+        
+    # Calculate Cost (Flat monthly for MVP, non-prorated for simplicity for now)
+    cost = SERVICE_PRICES[service_id] * tenant.seat_count
+    
+    if tenant.credits_balance < cost:
+        raise HTTPException(status_code=402, detail=f"Insufficient credits. Required: €{cost}")
+        
+    # Deduct Credits
+    tenant.credits_balance -= cost
+    
+    # Log Transaction
+    tx = CreditTransaction(
+        tenant_id=tenant.id,
+        amount=-cost,
+        transaction_type=CreditTransactionType.USAGE_CHARGE,
+        description=f"Activation of {service_id} for {tenant.seat_count} seats"
+    )
+    tm.log_credit_transaction(tx)
+    
+    # Update Service State
+    tenant.services[service_id] = TenantService(
+        name=service_id,
+        status=ServiceStatus.ACTIVE,
+        active_until=datetime.now() + timedelta(days=30), # 30 days from now
+        last_billed=datetime.now()
+    )
+    
+    tm.save_tenant(tenant)
+    return {"status": "success", "new_balance": tenant.credits_balance, "service": tenant.services[service_id]}
+
+@app.post("/api/billing/services/{service_id}/deactivate")
+async def deactivate_service(service_id: str, current_tenant_id: str = Depends(get_current_tenant)):
+    tm = get_agent().tenant_manager
+    tenant = tm.get_tenant(current_tenant_id)
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+        
+    if service_id not in tenant.services:
+         raise HTTPException(status_code=404, detail="Service not found")
+         
+    # Mark as CANCELED (still active until active_until)
+    # But for MVP simplicity, we might just set status to CANCELED and keep the expiry date.
+    # The gating logic should check (status == ACTIVE or (status == CANCELED and now < active_until))
+    
+    tenant.services[service_id].status = ServiceStatus.CANCELED
+    # Do not refund for now.
+    
+    tm.save_tenant(tenant)
+    return {"status": "success", "service": tenant.services[service_id]}
 
 
 if __name__ == "__main__":

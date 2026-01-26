@@ -93,6 +93,24 @@ export default function Settings() {
     if (!orgLoaded) return <div className="p-8 text-slate-500">Loading...</div>;
     if (!tenantId) return <div className="p-8 text-slate-500">Please select an Organization or sign in.</div>;
 
+    const sampleDockerCompose = `services:
+  analyzer:
+    image: ghcr.io/milad665/aices-plus-one-analyzer:latest
+    container_name: aices-analyzer
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/data              # Persist analyzer data
+    environment:
+      - API_HOST=0.0.0.0
+      # Option 1: Map repositories via JSON
+      - GIT_REPOSITORIES=[{"name":"main-repo","url":"git@github.com:org/repo.git","default_branch":"main"}]
+      # SSH Key for private repos (paste content or path)
+      - GIT_SSH_KEY="-----BEGIN OPENSSH PRIVATE KEY-----..."
+      # OR mount key file and use:
+      # - GIT_SSH_KEY_PATH=/data/id_rsa`;
+
     return (
         <div className="p-8 max-w-5xl mx-auto space-y-8 h-full overflow-y-auto bg-[#F8FAFC]">
             <header>
@@ -149,23 +167,10 @@ export default function Settings() {
                         <p className="text-sm text-slate-500 mb-3">Create a <code>docker-compose.yml</code> file in your infrastructure:</p>
                         <div className="relative group">
                             <pre className="bg-slate-900 text-slate-50 p-4 rounded-lg text-sm overflow-x-auto font-mono">
-                                {`services:
-  analyzer:
-    image: ghcr.io/milad665/aices-plus-one-analyzer:latest
-    container_name: aices-analyzer
-    restart: unless-stopped
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./data:/data              # Persist analyzer data
-      - /path/to/your/repos:/repos:ro # Mount your source code (Read-Only)
-    environment:
-      - API_HOST=0.0.0.0
-      - REPOSITORIES_DIR=/repos
-      - LOG_LEVEL=INFO`}
+                                {sampleDockerCompose}
                             </pre>
                             <button
-                                onClick={() => copyToClipboard(`services:\n  analyzer:\n    image: ghcr.io/milad665/aices-plus-one-analyzer:latest...`)}
+                                onClick={() => copyToClipboard(sampleDockerCompose)}
                                 className="absolute top-2 right-2 p-2 bg-white/10 hover:bg-white/20 rounded text-white transition-opacity opacity-0 group-hover:opacity-100"
                             >
                                 {copied ? <Check size={16} /> : <Copy size={16} />}
