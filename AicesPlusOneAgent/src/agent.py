@@ -10,6 +10,7 @@ import json
 from typing import Optional, Dict, Any, List
 from dotenv import load_dotenv
 import google.generativeai as genai
+import httpx
 
 from .schemas import C4Architecture, ContextView, ContainerView, ComponentView
 from .code_analyzer import CodeAnalyzer
@@ -189,10 +190,20 @@ For example in the container view, only include services and processes that are 
         tenant_config = tenant.analyzer_config if tenant else None
 
         # Get projects from code analyzer
-        print("Fetching projects from code analyzer...")
-        projects = await self.code_analyzer.get_projects(tenant_config=tenant_config)
-        print(f"Found {len(projects)} projects")
-        
+        print(f"Fetching projects from code analyzer for tenant {tenant_id}...")
+        try:
+            projects = await self.code_analyzer.get_projects(tenant_config=tenant_config)
+            print(f"Found {len(projects)} projects")
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                print(f"Analyzer 404: The configured URL {tenant_config.url if tenant_config else 'default'} returned Not Found. Check if the analyzer is running and the URL is correct.")
+                # We raise a user-friendly error that can be caught by API
+                raise ValueError("Code Analyzer unreachable (404). Please configure the correct Analyzer URL in Settings.")
+            raise
+        except (httpx.ConnectError, httpx.TimeoutException):
+             print(f"Analyzer Connection Error. URL: {tenant_config.url if tenant_config else 'default'}")
+             raise ValueError("Could not connect to Code Analyzer. Please check your URL configuration and ensure the analyzer container is running.")
+
         # Collect detailed project information
         project_details = []
         for project in projects:
